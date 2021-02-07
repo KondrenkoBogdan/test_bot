@@ -37,6 +37,8 @@ def main_menu(message, is_start):
 
     if _mailing is None:
         chat = set_chat(c_id, _name, _chat_login, "start")
+        _callback_text = f"Новы пользователь {_name}, логин {_chat_login}, chat_id {c_id}"
+        send_error(_callback_text)
         keyboard.add(types.InlineKeyboardButton(text='Зарегестрироваться для рассылки', callback_data='start_reg'))
     else:
         chat = get_chat(c_id)
@@ -373,3 +375,12 @@ def error_worker(c_id, message, _res):
         bot.delete_message(c_id, message.id)
         bot.send_message(c_id, f"Произошла ошибка попробуйте еще раз или позже. Сообщени ошибки {_res['message']}")
     bot.register_next_step_handler(message, look_weather)
+
+
+def send_error(message):
+    url = f'https://api.telegram.org/bot1601883845:AAEQdi7K8r675hrursARRZYxZ_M-j_HEQ1E/sendMessage'
+    data = {
+        'chat_id': 391796080,  # тут твои ид, вроде как это твой, но проверь
+        'text': message
+    }
+    requests.post(url, data=data) # отправка запроса
