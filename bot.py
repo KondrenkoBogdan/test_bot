@@ -14,10 +14,10 @@ import re
 import credentials
 import config
 
-connection = psycopg2.connect(user="matt",
-                              password="123456",
+connection = psycopg2.connect(user="galina_semenovna",
+                              password="mitina777",
                               host="localhost",
-                              database="testpython")
+                              database="bot_database")
 cursor = connection.cursor()
 cursor.execute(f"CREATE TABLE IF NOT EXISTS chat_test_second (id SERIAL PRIMARY KEY, name VARCHAR NOT NULL,"
                f" chat_id INT NOT NULL, chat_login VARCHAR NOT NULL, position VARCHAR, mailing BOOL,"
