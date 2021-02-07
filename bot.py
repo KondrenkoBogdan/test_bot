@@ -45,7 +45,7 @@ WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Path to the ssl private key
 # with the same value in you put in WEBHOOK_HOST
 
 WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
-WEBHOOK_URL_PATH = "/%s/" % (config.TOKEN)
+WEBHOOK_URL_PATH = "/%s/" % config.TOKEN
 
 logger = telebot.logger
 telebot.logger.setLevel(logging.INFO)
