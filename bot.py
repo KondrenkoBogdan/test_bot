@@ -54,16 +54,18 @@ bot = telebot.TeleBot(config.TOKEN)
 
 app = flask.Flask(__name__)
 
-
+print("empt")
 # Empty webserver index, return nothing, just http 200
 @app.route('/', methods=['GET', 'HEAD'])
 def index():
+    print("index")
     return ''
 
 
 # Process webhook calls
 @app.route(WEBHOOK_URL_PATH, methods=['POST'])
 def webhook():
+    print("webhook")
     if flask.request.headers.get('content-type') == 'application/json':
         json_string = flask.request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
