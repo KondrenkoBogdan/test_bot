@@ -18,10 +18,10 @@ import logging
 import flask
 
 
-connection = psycopg2.connect(user="galina_semenovna",
-                              password="mitina777",
+connection = psycopg2.connect(user="matt",
+                              password="123456",
                               host="localhost",
-                              database="bot_database")
+                              database="testpython")
 cursor = connection.cursor()
 cursor.execute(f"CREATE TABLE IF NOT EXISTS chat_test_second (id SERIAL PRIMARY KEY, name VARCHAR NOT NULL,"
                f" chat_id INT NOT NULL, chat_login VARCHAR NOT NULL, position VARCHAR, mailing BOOL,"
@@ -46,7 +46,6 @@ WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Path to the ssl private key
 
 WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
 WEBHOOK_URL_PATH = "/%s/" % (config.TOKEN)
-
 logger = telebot.logger
 telebot.logger.setLevel(logging.INFO)
 

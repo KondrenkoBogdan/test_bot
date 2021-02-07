@@ -10,10 +10,10 @@ import schedule
 import time
 import psycopg2
 
-connection = psycopg2.connect(user="galina_semenovna",
-                              password="mitina777",
+connection = psycopg2.connect(user="matt",
+                              password="123456",
                               host="localhost",
-                              database="bot_database")
+                              database="testpython")
 cursor = connection.cursor()
 
 P_TIMEZONE = pytz.timezone(config.TIMEZONE)
