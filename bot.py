@@ -32,8 +32,8 @@ WEBHOOK_HOST = '104.248.133.84'
 WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
 WEBHOOK_LISTEN = '104.248.133.84'  # In some VPS you may need to put here the IP addr
 
-WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Path to the ssl certificate
-WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Path to the ssl private key
+WEBHOOK_SSL_CERT = './../..webhook_cert.pem'  # Path to the ssl certificate
+WEBHOOK_SSL_PRIV = './../../webhook_pkey.pem'  # Path to the ssl private key
 
 # Quick'n'dirty SSL certificate generation:
 #
@@ -158,7 +158,7 @@ cherrypy.config.update({
     'server.socket_port': WEBHOOK_PORT,
     'server.ssl_module': 'builtin',
     'server.ssl_certificate': WEBHOOK_SSL_CERT,
-     'server.ssl_private_key': WEBHOOK_SSL_PRIV
+    'server.ssl_private_key': WEBHOOK_SSL_PRIV
  })
 cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
 
