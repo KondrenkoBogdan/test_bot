@@ -127,15 +127,6 @@ def callback_worker(call):
         bot.register_next_step_handler(call.message, set_name)
 
 
-bot.remove_webhook()
-
-time.sleep(0.1)
-
-# Set webhook
-bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
-                certificate=open(WEBHOOK_SSL_CERT, 'r'))
-
-
 class WebhookServer(object):
     @cherrypy.expose
     def index(self):
@@ -152,6 +143,11 @@ class WebhookServer(object):
             raise cherrypy.HTTPError(403)
 
 
+bot.remove_webhook()
+
+# Set webhook
+bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
+                certificate=open(WEBHOOK_SSL_CERT, 'r'))
 # Start flask server
 cherrypy.config.update({
     'server.socket_host': WEBHOOK_LISTEN,
@@ -161,3 +157,5 @@ cherrypy.config.update({
     'server.ssl_private_key': WEBHOOK_SSL_PRIV
 })
 cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+
+
