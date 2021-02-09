@@ -14,9 +14,9 @@ import re
 import credentials
 import config
 import logging
+import cherrypy
 
 import flask
-
 
 connection = psycopg2.connect(user="galina_semenovna",
                               password="mitina777",
@@ -28,9 +28,8 @@ cursor.execute(f"CREATE TABLE IF NOT EXISTS chat_test_second (id SERIAL PRIMARY 
                f" city VARCHAR, lat FLOAT, lon FLOAT)")
 connection.commit()
 
-
 WEBHOOK_HOST = '104.248.133.84'
-WEBHOOK_PORT = 80  # 443, 80, 88 or 8443 (port need to be 'open')
+WEBHOOK_PORT = 443  # 443, 80, 88 or 8443 (port need to be 'open')
 WEBHOOK_LISTEN = '104.248.133.84'  # In some VPS you may need to put here the IP addr
 
 WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Path to the ssl certificate
@@ -54,8 +53,7 @@ bot = telebot.TeleBot(config.TOKEN)
 
 app = flask.Flask(__name__)
 
-print("empt")
-# Empty webserver index, return nothing, just http 200
+
 @app.route('/', methods=['GET', 'HEAD'])
 def index():
     print("index")
@@ -137,8 +135,29 @@ time.sleep(0.1)
 bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
                 certificate=open(WEBHOOK_SSL_CERT, 'r'))
 
+
+class WebhookServer(object):
+    @cherrypy.expose
+    def index(self):
+        if 'content-length' in cherrypy.request.headers and \
+                'content-type' in cherrypy.request.headers and \
+                cherrypy.request.headers['content-type'] == 'application/json':
+            length = int(cherrypy.request.headers['content-length'])
+            json_string = cherrypy.request.body.read(length).decode("utf-8")
+            update = telebot.types.Update.de_json(json_string)
+            # Эта функция обеспечивает проверку входящего сообщения
+            bot.process_new_updates([update])
+            return ''
+        else:
+            raise cherrypy.HTTPError(403)
+
+
 # Start flask server
-app.run(host=WEBHOOK_LISTEN,
-        port=WEBHOOK_PORT,
-        ssl_context=(WEBHOOK_SSL_CERT, WEBHOOK_SSL_PRIV),
-        debug=True)
+cherrypy.config.update({
+    'server.socket_host': WEBHOOK_LISTEN,
+    'server.socket_port': WEBHOOK_PORT,
+    'server.ssl_module': 'builtin',
+    'server.ssl_certificate': WEBHOOK_SSL_CERT,
+    'server.ssl_private_key': WEBHOOK_SSL_PRIV
+})
+cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
