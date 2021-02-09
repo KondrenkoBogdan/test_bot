@@ -126,7 +126,7 @@ def callback_worker(call):
         bot.send_message(c_id, "Хорошо, тогда как вас зовут ?")
         bot.register_next_step_handler(call.message, set_name)
 
-
+bot.remove_webhook()
 bot.polling(none_stop=True)
 
 
