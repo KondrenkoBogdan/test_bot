@@ -129,18 +129,18 @@ class WebhookServer(object):
 
 
 bot.remove_webhook()
-
-# Set webhook
-bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
-                certificate=open(WEBHOOK_SSL_CERT, 'r'))
-# Start flask server
-cherrypy.config.update({
-    'server.socket_host': WEBHOOK_LISTEN,
-    'server.socket_port': WEBHOOK_PORT,
-    'server.ssl_module': 'builtin',
-    'server.ssl_certificate': WEBHOOK_SSL_CERT,
-    'server.ssl_private_key': WEBHOOK_SSL_PRIV
- })
-cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+bot.polling(none_stop=True)
+# # Set webhook
+# bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
+#                 certificate=open(WEBHOOK_SSL_CERT, 'r'))
+# # Start flask server
+# cherrypy.config.update({
+#     'server.socket_host': WEBHOOK_LISTEN,
+#     'server.socket_port': WEBHOOK_PORT,
+#     'server.ssl_module': 'builtin',
+#     'server.ssl_certificate': WEBHOOK_SSL_CERT,
+#     'server.ssl_private_key': WEBHOOK_SSL_PRIV
+#  })
+# cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
 
 
