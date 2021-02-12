@@ -115,6 +115,7 @@ def callback_worker(call):
 class WebhookServer(object):
     @cherrypy.expose
     def index(self):
+        print("ASDASDSADAS")
         if 'content-length' in cherrypy.request.headers and \
                 'content-type' in cherrypy.request.headers and \
                 cherrypy.request.headers['content-type'] == 'application/json':
