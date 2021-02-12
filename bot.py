@@ -29,7 +29,7 @@ cursor.execute(f"CREATE TABLE IF NOT EXISTS chat_test_second (id SERIAL PRIMARY 
 connection.commit()
 
 WEBHOOK_HOST = '104.248.133.84'
-WEBHOOK_PORT = 443  # 443, 80, 88 or 8443 (port need to be 'open')
+WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
 WEBHOOK_LISTEN = '104.248.133.84'  # In some VPS you may need to put here the IP addr
 
 WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Path to the ssl certificate
@@ -52,19 +52,6 @@ telebot.logger.setLevel(logging.INFO)
 bot = telebot.TeleBot(config.TOKEN)
 
 app = flask.Flask(__name__)
-
-
-# Process webhook calls
-@app.route(WEBHOOK_URL_PATH, methods=['POST'])
-def webhook():
-    print("webhook")
-    if flask.request.headers.get('content-type') == 'application/json':
-        json_string = flask.request.get_data().decode('utf-8')
-        update = telebot.types.Update.de_json(json_string)
-        bot.process_new_updates([update])
-        return ''
-    else:
-        flask.abort(403)
 
 
 @bot.message_handler(commands=['start'])
