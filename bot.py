@@ -28,7 +28,7 @@ cursor.execute(f"CREATE TABLE IF NOT EXISTS chat_test_second (id SERIAL PRIMARY 
                f" city VARCHAR, lat FLOAT, lon FLOAT)")
 connection.commit()
 
-WEBHOOK_HOST = '10.114.0.2'
+WEBHOOK_HOST = '104.248.133.84'
 WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
 WEBHOOK_LISTEN = '10.114.0.2'  # In some VPS you may need to put here the IP addr
 
