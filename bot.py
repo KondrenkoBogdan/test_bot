@@ -249,3 +249,9 @@ cherrypy.config.update({
     'server.ssl_private_key': WEBHOOK_SSL_PRIV
 })
 cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+
+schedule.every().minute.do(job)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)

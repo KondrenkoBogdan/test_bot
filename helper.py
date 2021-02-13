@@ -331,6 +331,10 @@ def get_mailing(c_id):
         return None
 
 
+def job():
+    send_error("schedule every 1 minute")
+
+
 def send_error(message):
     url = f'https://api.telegram.org/bot1601883845:AAEQdi7K8r675hrursARRZYxZ_M-j_HEQ1E/sendMessage'
     data = {
