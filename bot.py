@@ -244,11 +244,7 @@ schedule.every().day.at("21:00").do(evening_mailing)
 schedule.every().day.at("22:00").do(obed_mailing)
 schedule.every().day.at("23:00").do(night_mailing)
 schedule.every(1).minutes.do(night_mailing)
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
-
+schedule.run_pending()
 bot.remove_webhook()
 bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
                 certificate=open(WEBHOOK_SSL_CERT, 'r'))
