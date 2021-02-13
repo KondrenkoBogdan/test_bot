@@ -251,7 +251,7 @@ cherrypy.config.update({
 })
 cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
 
-schedule.every(5).seconds.do(job)
+schedule.every().dat.at("8:00").do(morning_mailing)
 
 while True:
     schedule.run_pending()

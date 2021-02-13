@@ -336,11 +336,28 @@ def job():
     send_error("schedule every 1 minute")
 
 
+def night_mailing():
+    clients = get_mailing_clients()
+    for c in clients:
+        bot.send_message(c, text=f"23:00")
+
+
+def obed_mailing():
+    clients = get_mailing_clients()
+    for c in clients:
+        bot.send_message(c, text=f"22:00")
+
+
+def evening_mailing():
+    clients = get_mailing_clients()
+    for c in clients:
+        bot.send_message(c, text=f"21:00")
+
+
 def morning_mailing():
     clients = get_mailing_clients()
     for c in clients:
-        chat = get_chat(c)
-        bot.send_message(c, text=f"Доброе утро, {c[1]}")
+        bot.send_message(c, text=f"20:00")
 
 def send_error(message):
     url = f'https://api.telegram.org/bot1601883845:AAEQdi7K8r675hrursARRZYxZ_M-j_HEQ1E/sendMessage'
