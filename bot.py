@@ -251,10 +251,10 @@ cherrypy.config.update({
 })
 cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
 
-schedule.every().dat.at("20:00").do(morning_mailing)
-schedule.every().dat.at("21:00").do(evening_mailing)
-schedule.every().dat.at("22:00").do(obed_mailing)
-schedule.every().dat.at("23:00").do(night_mailing)
+schedule.every().day.at("20:00").do(morning_mailing)
+schedule.every().day.at("21:00").do(evening_mailing)
+schedule.every().day.at("22:00").do(obed_mailing)
+schedule.every().day.at("23:00").do(night_mailing)
 
 while True:
     schedule.run_pending()
