@@ -280,6 +280,7 @@ def statistic(call):
     c_id = chat_id(call)
     bot.send_message(c_id, text="тут статистика")
 
+
 def set_mailing(chat_id, bool):
     cursor.execute(f"UPDATE chat_test_second SET mailing = '{bool}' WHERE chat_id = '{chat_id}'")
     connection.commit()
@@ -333,6 +334,13 @@ def get_mailing(c_id):
 
 def job():
     send_error("schedule every 1 minute")
+
+
+def morning_mailing():
+    clients = get_mailing_clients()
+    for c in clients:
+        chat = get_chat(c)
+
 
 
 def send_error(message):

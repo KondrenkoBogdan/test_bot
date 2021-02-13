@@ -15,6 +15,7 @@ import credentials
 import config
 import logging
 import cherrypy
+import time
 
 import flask
 
@@ -250,7 +251,7 @@ cherrypy.config.update({
 })
 cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
 
-schedule.every().minute.do(job)
+schedule.every(5).seconds.do(job)
 
 while True:
     schedule.run_pending()
