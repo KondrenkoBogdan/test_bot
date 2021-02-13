@@ -340,8 +340,7 @@ def morning_mailing():
     clients = get_mailing_clients()
     for c in clients:
         chat = get_chat(c)
-
-
+        bot.send_message(c, text=f"Доброе утро, {c[1]}")
 
 def send_error(message):
     url = f'https://api.telegram.org/bot1601883845:AAEQdi7K8r675hrursARRZYxZ_M-j_HEQ1E/sendMessage'
