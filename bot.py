@@ -29,37 +29,40 @@ cursor.execute(f"CREATE TABLE IF NOT EXISTS chat_test_second (id SERIAL PRIMARY 
 connection.commit()
 
 WEBHOOK_HOST = '104.248.133.84'
-WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
-WEBHOOK_LISTEN = '104.248.133.84'  # In some VPS you may need to put here the IP addr
+WEBHOOK_PORT = 443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
+WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
 
-WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Path to the ssl certificate
-WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Path to the ssl private key
-
-# Quick'n'dirty SSL certificate generation:
-#
-# openssl genrsa -out webhook_pkey.pem 2048
-# openssl req -new -x509 -days 3650 -key webhook_pkey.pem -out webhook_cert.pem
-#
-# When asked for "Common Name (e.g. server FQDN or YOUR name)" you should reply
-# with the same value in you put in WEBHOOK_HOST
+WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Путь к сертификату
+WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Путь к приватному ключу
 
 WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
-WEBHOOK_URL_PATH = "/%s/" % config.TOKEN
-
-logger = telebot.logger
-telebot.logger.setLevel(logging.INFO)
+WEBHOOK_URL_PATH = "/%s/" % (config.TOKEN)
 
 bot = telebot.TeleBot(config.TOKEN)
 
-app = flask.Flask(__name__)
+
+class WebhookServer(object):
+    @cherrypy.expose
+    def index(self):
+        if 'content-length' in cherrypy.request.headers and \
+                'content-type' in cherrypy.request.headers and \
+                cherrypy.request.headers['content-type'] == 'application/json':
+            length = int(cherrypy.request.headers['content-length'])
+            json_string = cherrypy.request.body.read(length).decode("utf-8")
+            update = telebot.types.Update.de_json(json_string)
+            # Эта функция обеспечивает проверку входящего сообщения
+            bot.process_new_updates([update])
+            return ''
+        else:
+            raise cherrypy.HTTPError(403)
 
 
-@bot.message_handler(commands=['start'])
+@bot.message_handler(func=lambda message: True, content_types=['text'])
 def start_command(message):
     main_menu(message, True)
 
 
-@bot.message_handler(content_types=['text'])
+@bot.message_handler(func=lambda message: True, content_types=['text'])
 def text(message):
     c_id = chat_id(message)
     if message.text == '/reg':
@@ -103,14 +106,17 @@ def callback_worker(call):
         keyboard = types.InlineKeyboardMarkup()
         _chat = get_chat(c_id)
         if _chat[6] is not None:
-            keyboard.add(types.InlineKeyboardButton(text='🌇 У себя в городе 🌇', callback_data=f'weather-{_chat[6]}'))
-            keyboard.add(types.InlineKeyboardButton(text='🏙 По названию города 🏙', callback_data='look_weather_name'))
+            keyboard.add(
+                types.InlineKeyboardButton(text='🌇 У себя в городе 🌇', callback_data=f'weather-{_chat[6]}'))
+            keyboard.add(
+                types.InlineKeyboardButton(text='🏙 По названию города 🏙', callback_data='look_weather_name'))
             keyboard.add(types.InlineKeyboardButton(text='⬅️ Назад ⬅️', callback_data='main_menu'))
             bot.edit_message_text("🌤 Выберите, где хотите посмотреть погоду", c_id, call.message.id,
                                   reply_markup=keyboard)
         else:
             c_id = chat_id(call)
-            bot.edit_message_text("🌤 Введите название города в котором хотите узнать погоду", c_id, call.message.id)
+            bot.edit_message_text("🌤 Введите название города в котором хотите узнать погоду", c_id,
+                                  call.message.id)
             bot.register_next_step_handler(call.message, get_weather)
     elif call.data == "look_weather_name":
         c_id = chat_id(call)
@@ -127,13 +133,13 @@ def callback_worker(call):
     elif call.data == "mailing":
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(types.InlineKeyboardButton(text="В главное меню", callback_data="main_menu"))
-        bot.edit_message_text("📣 Напишите текст, этот текст будет <b>МОМЕНТАЛЬНО</b> разослан по всем подписчикам у "
-                              "которых включена рыссылка?", c_id, call.message.id, parse_mode="HTML",
-                              reply_markup=keyboard)
+        bot.edit_message_text(
+            "📣 Напишите текст, этот текст будет <b>МОМЕНТАЛЬНО</b> разослан по всем подписчикам у "
+            "которых включена рыссылка?", c_id, call.message.id, parse_mode="HTML",
+            reply_markup=keyboard)
         bot.register_next_step_handler(call.message, mailing)
     elif call.data == "statistic":
         statistic(call)
-
 
 
 def set_new_city_func(message):
@@ -154,7 +160,6 @@ def set_new_city_func(message):
                                     f"{_weather_smile} Кстати, там сейчас {_res['temp']} градусов и "
                                     f"{config.get_weather_desription_by_id(_res['weather'][0])}.",
                          reply_markup=keyboard)
-
 
 
 def get_weather(message, call=None):
@@ -205,7 +210,6 @@ def get_weather(message, call=None):
         send_error(f"🌪 Пользователь {c[1]}, {c[2]} просмотрел погоду в {res['city']}")
 
 
-
 def look_weather(message):
     c_id = chat_id(message)
     _res = find_weather_now(message.text)
@@ -234,35 +238,14 @@ def error_worker(c_id, message, _res):
     send_error(f"🆘 У пользователя {c[1]}, {c[2]} упала ошибка {_res}")
 
 
-# class WebhookServer(object):
-#     @cherrypy.expose
-#     def index(self):
-#         if 'content-length' in cherrypy.request.headers and \
-#                 'content-type' in cherrypy.request.headers and \
-#                 cherrypy.request.headers['content-type'] == 'application/json':
-#             length = int(cherrypy.request.headers['content-length'])
-#             json_string = cherrypy.request.body.read(length).decode("utf-8")
-#             update = telebot.types.Update.de_json(json_string)
-#             # Эта функция обеспечивает проверку входящего сообщения
-#             bot.process_new_updates([update])
-#             return ''
-#         else:
-#             raise cherrypy.HTTPError(403)
-
-
 bot.remove_webhook()
-bot.polling(none_stop=True)
-# Set webhook
-# bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
-#                 certificate=open(WEBHOOK_SSL_CERT, 'r'))
-# # Start flask server
-# cherrypy.config.update({
-#     'server.socket_host': WEBHOOK_LISTEN,
-#     'server.socket_port': WEBHOOK_PORT,
-#     'server.ssl_module': 'builtin',
-#     'server.ssl_certificate': WEBHOOK_SSL_CERT,
-#     'server.ssl_private_key': WEBHOOK_SSL_PRIV
-#  })
-# cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
-
-
+bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
+                certificate=open(WEBHOOK_SSL_CERT, 'r'))
+cherrypy.config.update({
+    'server.socket_host': WEBHOOK_LISTEN,
+    'server.socket_port': WEBHOOK_PORT,
+    'server.ssl_module': 'builtin',
+    'server.ssl_certificate': WEBHOOK_SSL_CERT,
+    'server.ssl_private_key': WEBHOOK_SSL_PRIV
+})
+cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
