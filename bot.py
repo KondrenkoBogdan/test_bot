@@ -239,6 +239,16 @@ def error_worker(c_id, message, _res):
     send_error(f"🆘 У пользователя {c[1]}, {c[2]} упала ошибка {_res}")
 
 
+schedule.every().day.at("20:00").do(morning_mailing)
+schedule.every().day.at("21:00").do(evening_mailing)
+schedule.every().day.at("22:00").do(obed_mailing)
+schedule.every().day.at("23:00").do(night_mailing)
+schedule.every(1).minutes.do(night_mailing)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
+
 bot.remove_webhook()
 bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
                 certificate=open(WEBHOOK_SSL_CERT, 'r'))
@@ -250,12 +260,3 @@ cherrypy.config.update({
     'server.ssl_private_key': WEBHOOK_SSL_PRIV
 })
 cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
-
-schedule.every().day.at("20:00").do(morning_mailing)
-schedule.every().day.at("21:00").do(evening_mailing)
-schedule.every().day.at("22:00").do(obed_mailing)
-schedule.every().day.at("23:00").do(night_mailing)
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
