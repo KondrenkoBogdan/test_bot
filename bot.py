@@ -14,6 +14,7 @@ import config
 import logging
 import cherrypy
 import time
+import tasks
 
 import flask
 
