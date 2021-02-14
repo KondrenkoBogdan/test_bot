@@ -244,12 +244,12 @@ def set_chat_name(chat_id, name):
 
 
 def get_mailing_clients():
-    cursor.execute(f"SELECT chat_id FROM chat_test_second WHERE (mailing=true)")
+    cursor.execute(f"SELECT * FROM chat_test_second WHERE (mailing=true)")
     response = cursor.fetchall()
     if len(response) != 0:
         res = []
         for i in response:
-            res.append(i[0])
+            res.append(i)
         return res
     else:
         return None
@@ -320,10 +320,6 @@ def get_mailing(c_id):
         return res[0][0]
     else:
         return None
-
-
-def schedule_print():
-    print("schedule print")
 
 
 def send_error(message):

@@ -1,22 +1,8 @@
-import psycopg2
-from telebot import types
-from helper import *
-import telebot
-import config
-import datetime
-import pytz
-import json
-import traceback
-import requests
-import re
-import credentials
-import config
-import logging
 import cherrypy
-import time
-import tasks
+import telebot
 
-import flask
+import config
+from helper import *
 
 connection = psycopg2.connect(user="galina_semenovna",
                               password="mitina777",
@@ -219,8 +205,8 @@ def get_weather(message, call=None):
                 f"{_district_text}" \
                 f"\n{_weather_text}" \
                 f"\n💨 Ветер: <b>{res['wind']}</b> метров в секунду" \
-                f"\n💦 Влажность: <b>{res['humidity']}</b> процентов" \
-                f"\n🌥 Облачность: <b>{res['clouds']}</b> процентов" \
+                f"\n💦 Влажность: <b>{res['humidity']}</b> %" \
+                f"\n🌥 Облачность: <b>{res['clouds']}</b> %" \
                 f"\n👁 Видимость: <b>{res['visibility']}</b> метров" \
                 f"\n🌅 Восход солнца в <b>{res['sunrise']}</b>" \
                 f"\n🌄 Закат в <b>{res['sunset']}</b>" \
@@ -283,3 +269,5 @@ else:
         'server.ssl_private_key': WEBHOOK_SSL_PRIV
     })
     cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+
+
