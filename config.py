@@ -1,4 +1,11 @@
-TOKEN = '1670658089:AAGVaGq9hKX3cVbCxtM5PGhJMmhyU194m1A' #prod
+t = "TEST"
+p = "PRODUCTION"
+
+ENV = p
+if ENV == t:
+    TOKEN = '1495508310:AAFBqWcsUwsMTUFRo01XGIzgYG4T_hT4q9U'  # test
+else:
+    TOKEN = '1670658089:AAGVaGq9hKX3cVbCxtM5PGhJMmhyU194m1A'  # prod
 TIMEZONE = 'Europe/Kiev'
 TIMEZONE_COMMON_NAME = 'Kiev, UA'
 

@@ -1,5 +1,4 @@
 import psycopg2
-import telebot
 from telebot import types
 from helper import *
 import telebot
@@ -8,7 +7,6 @@ import datetime
 import pytz
 import json
 import traceback
-import schedule
 import requests
 import re
 import credentials
@@ -73,7 +71,7 @@ def text(message):
         keyboard.add(types.InlineKeyboardButton(text='⬅️ В главнео меню', callback_data='main_menu'))
         bot.send_message(c_id, text="🤷🏼 Бот вас не понял", reply_markup=keyboard)
         c = get_chat(c_id)
-        send_error(f"🤷🏿‍♂️ Бот не понимает пользователя {c[1]}, {c[2]}")
+        send_error(f"🤷🏿‍♂️ Бот не понимает пользователя {c[1]}, {c[3]}, {c[2]}. Он вводил {message.text}")
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -126,6 +124,8 @@ def callback_worker(call):
     elif call.data == "change_name":
         bot.edit_message_text("🤚 Введите как к вам можно обращаться?", c_id, call.message.id)
         bot.register_next_step_handler(call.message, set_new_name)
+    elif data.startswith('name_yes_'):
+        set_name_yes(c_id, call.message, data[9:])
     elif call.data == "name_no":
         bot.send_message(c_id, "❓ Хорошо, тогда как вас зовут ?")
         bot.register_next_step_handler(call.message, set_name)
@@ -146,9 +146,8 @@ def callback_worker(call):
 def set_new_city_func(message):
     c_id = chat_id(message)
     _res = find_weather_now(message.text)
-    bot.delete_message(c_id, message.id)
     if _res['error']:
-        error_worker(c_id, message, _res)
+        error_worker(c_id, message, _res, set_new_city_func)
     else:
         if _res['temp'] > 0:
             _weather_smile = "☀️"
@@ -157,10 +156,32 @@ def set_new_city_func(message):
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(types.InlineKeyboardButton("⬅️ В главное меню", callback_data="main_menu"))
         set_new_city_db(c_id, message.text)
-        bot.send_message(c_id, text=f"🌇 Отлично, город {message.text} закреплен за вами. 🌇\n"
-                                    f"{_weather_smile} Кстати, там сейчас {_res['temp']} градусов и "
-                                    f"{config.get_weather_desription_by_id(_res['weather'][0])}.",
-                         reply_markup=keyboard)
+        bot.send_message(c_id, text=f"🌇 Отлично, город <b>{message.text}</b> закреплен за вами. 🌇\n"
+                                    f"{_weather_smile} Кстати, там сейчас <b>{_res['temp']}</b> градусов и "
+                                    f"<b>{config.get_weather_desription_by_id(_res['weather'][0])}.</b>",
+                         reply_markup=keyboard, parse_mode="HTML")
+
+
+def set_new_city_func_reg(message):
+    c_id = chat_id(message)
+    _res = find_weather_now(message.text)
+    if _res['error']:
+        error_worker(c_id, message, _res, set_new_city_func_reg)
+    else:
+        if _res['temp'] > 0:
+            _weather_smile = "☀️"
+        else:
+            _weather_smile = "❄️"
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton(text='🔔 Да', callback_data='mailing_true'))
+        keyboard.add(types.InlineKeyboardButton(text='🔕 Нет', callback_data='mailing_false'))
+        set_new_city_db(c_id, message.text)
+        bot.send_message(c_id, text=f"🌇 Отлично, город <b>{message.text}</b> закреплен за вами. 🌇\n"
+                                    f"{_weather_smile} Кстати, там сейчас <b>{_res['temp']}</b> градусов и "
+                                    f"<b>{config.get_weather_desription_by_id(_res['weather'][0])}.</b>\n\n"
+                                    f"🔔<b>Продолжим.</b> Хотите ли вы получать от нас рассылку с погодой Вашего города"
+                                    f" и курсом гривны в 8:00 и 18:00 ?",
+                         reply_markup=keyboard, parse_mode="HTML")
 
 
 def get_weather(message, call=None):
@@ -172,7 +193,7 @@ def get_weather(message, call=None):
         res = find_weather_now(message.text)
     c = get_chat(c_id)
     if res['error']:
-        error_worker(c_id, message, res)
+        error_worker(c_id, message, res, get_weather)
     else:
         if res['temp'] > 0:
             _weather_smile = "☀️"
@@ -208,51 +229,56 @@ def get_weather(message, call=None):
         else:
             bot.delete_message(c_id, message.id)
             bot.send_message(c_id, text=_text, reply_markup=keyboard, parse_mode="HTML")
-        send_error(f"🌪 Пользователь {c[1]}, {c[2]} просмотрел погоду в {res['city']}")
+        send_error(f"🌪 Пользователь  {c[1]}, {c[3]}, {c[2]} просмотрел погоду в <b>{res['city']}</b>.\n"
+                   f"{_weather_smile} <b>{res['temp']}</b> градусов (ощущается как <b>{res['feels']}</b>){_district_text}")
 
 
-def look_weather(message):
+def set_name_yes(c_id, message, name):
+    set_chat_name(c_id, name)
+    bot.edit_message_text(f"👍 Отлично, <b>{name}</b>, теперь я буду обращаться к вам так!\n🌍 А сейчас скажите мне "
+                          f"названия вашего города.\n🌦 Я буду отслеживать там погоду и делиться этой информацией"
+                          f" с <b>Вами</b>!", c_id, message.id, parse_mode="HTML")
+    bot.register_next_step_handler(message, set_new_city_func_reg)
+
+
+def set_name(message):
     c_id = chat_id(message)
-    _res = find_weather_now(message.text)
-    if _res['error']:
-        error_worker(c_id, message, _res)
-    else:
-        bot.delete_message(c_id, message.id)
-        bot.send_message(c_id, f"🌆 Отлично, {message.text} привязан к вам!")
+    set_chat_name(c_id, message.text)
+    bot.send_message(c_id,
+                     f"👍 Отлично, <b>{message.text}</b>, теперь я буду обращаться к вам так!\n🌍 А сейчас скажите мне "
+                     f"названия вашего города.\n🌦 Я буду отслеживать там погоду и делиться этой информацией"
+                     f" с <b>Вами</b>!", parse_mode="HTML")
+    bot.register_next_step_handler(message, set_new_city_func_reg)
 
 
-def error_worker(c_id, message, _res):
+def error_worker(c_id, message, _res, call_back):
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton('↩️ Вернуться в главное меню ↩️', callback_data=f'main_menu'))
     c = get_chat(c_id)
     if _res["message"] == "city not found":
-        bot.delete_message(c_id, message.id)
         msg = bot.send_message(c_id, "🤷🏼 Данного места не найдено, попробуйте еще раз 🤷🏼",
                                reply_markup=keyboard)
     else:
-        bot.delete_message(c_id, message.id)
         msg = bot.send_message(c_id,
                                f"Произошла ошибка попробуйте еще раз или позже. Сообщени ошибки {_res['message']}."
                                f" Нам уже пришло уведомление об этом.",
                                reply_markup=keyboard)
-    bot.register_next_step_handler(msg, look_weather)
-    send_error(f"🆘 У пользователя {c[1]}, {c[2]} упала ошибка {_res}")
+    bot.register_next_step_handler(msg, call_back)
+    send_error(f"🆘 У пользователя  {c[1]}, {c[3]}, {c[2]} упала ошибка {_res}. Он вводил {message.text}")
 
 
-schedule.every().day.at("20:00").do(morning_mailing)
-schedule.every().day.at("21:00").do(evening_mailing)
-schedule.every().day.at("22:00").do(obed_mailing)
-schedule.every().day.at("23:00").do(night_mailing)
-
-schedule.run_pending()
 bot.remove_webhook()
-bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
-                certificate=open(WEBHOOK_SSL_CERT, 'r'))
-cherrypy.config.update({
-    'server.socket_host': WEBHOOK_LISTEN,
-    'server.socket_port': WEBHOOK_PORT,
-    'server.ssl_module': 'builtin',
-    'server.ssl_certificate': WEBHOOK_SSL_CERT,
-    'server.ssl_private_key': WEBHOOK_SSL_PRIV
-})
-cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+if config.ENV == config.t:
+    bot.polling(none_stop=True)
+else:
+    bot.remove_webhook()
+    bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
+                    certificate=open(WEBHOOK_SSL_CERT, 'r'))
+    cherrypy.config.update({
+        'server.socket_host': WEBHOOK_LISTEN,
+        'server.socket_port': WEBHOOK_PORT,
+        'server.ssl_module': 'builtin',
+        'server.ssl_certificate': WEBHOOK_SSL_CERT,
+        'server.ssl_private_key': WEBHOOK_SSL_PRIV
+    })
+    cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
