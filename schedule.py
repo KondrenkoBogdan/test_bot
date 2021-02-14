@@ -2,7 +2,7 @@ from helper import *
 import schedule
 import time
 
-schedule.every().day.at("8:40").do(shedule_job)
+schedule.every(2).seconds.do(schedule_print)
 
 while True:
     schedule.run_pending()

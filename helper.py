@@ -322,8 +322,8 @@ def get_mailing(c_id):
         return None
 
 
-def shedule_job():
-    send_error("schedule message")
+def schedule_print():
+    print("schedule print")
 
 
 def send_error(message):
