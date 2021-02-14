@@ -61,15 +61,16 @@ def mailing(message):
     clients = get_mailing_clients()
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="⬅️ В главное меню", callback_data='main_menu'))
-    keyboard.add(types.InlineKeyboardButton(text="📤 Прекратить рассылку", callback_data='mailing_false'))
+    keyboard.add(types.InlineKeyboardButton(text="🔕 Прекратить рассылку", callback_data='mailing_false'))
     for c in clients:
-        bot.send_message(c, text=message.text, reply_markup=keyboard)
+        bot.send_message(c[2], text=message.text, reply_markup=keyboard)
 
 
 def admin_panel(call):
     c_id = chat_id(call)
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text='📝 Создать рассылку', callback_data='mailing'))
+    keyboard.add(types.InlineKeyboardButton(text='📝 Статистика', callback_data='statistic'))
     keyboard.add(types.InlineKeyboardButton(text='⬅️ В главное меню', callback_data='main_menu'))
     bot.edit_message_text("Выберите, что хотите сделать", c_id, call.message.id, reply_markup=keyboard)
 
@@ -243,6 +244,11 @@ def set_chat_name(chat_id, name):
     return chat
 
 
+def get_total_count():
+    cursor.execute(f"SELECT COUNT(*) FROM chat_test_second")
+    response = cursor.fetchall()
+    return response
+
 def get_mailing_clients():
     cursor.execute(f"SELECT * FROM chat_test_second WHERE (mailing=true)")
     response = cursor.fetchall()
@@ -266,7 +272,8 @@ def get_chat(chat_id):
 
 def statistic(call):
     c_id = chat_id(call)
-    bot.send_message(c_id, text="тут статистика")
+    total_count = get_total_count()
+    bot.send_message(c_id, text=f"Всего зарегистрировано пользователей {total_count}")
 
 
 def set_mailing(chat_id, bool):
@@ -274,11 +281,11 @@ def set_mailing(chat_id, bool):
     connection.commit()
 
 
-def set_chat(chat_id, name, chat_login, position):
+def set_chat(chat_id, name, chat_login):
     is_already_exists = get_chat(chat_id)
     if is_already_exists is None:
-        cursor.execute(f"INSERT INTO chat_test_second (chat_id, name, chat_login, position) "
-                       f"VALUES('{chat_id}','{name}','{chat_login}','{position}')")
+        cursor.execute(f"INSERT INTO chat_test_second (chat_id, name, chat_login) "
+                       f"VALUES('{chat_id}','{name}','{chat_login}')")
         connection.commit()
         chat = get_chat(chat_id)
         _callback_text = f"🙋 <b>Новый пользователь\nИмя: {name}\nЛогин {chat_login}\nСhat_id {chat_id}\n" \

@@ -10,8 +10,7 @@ connection = psycopg2.connect(user="galina_semenovna",
                               database="bot_database")
 cursor = connection.cursor()
 cursor.execute(f"CREATE TABLE IF NOT EXISTS chat_test_second (id SERIAL PRIMARY KEY, name VARCHAR NOT NULL,"
-               f" chat_id INT NOT NULL, chat_login VARCHAR NOT NULL, position VARCHAR, mailing BOOL,"
-               f" city VARCHAR, lat FLOAT, lon FLOAT)")
+               f" chat_id INT NOT NULL, chat_login VARCHAR NOT NULL, mailing BOOL, city VARCHAR)")
 connection.commit()
 
 WEBHOOK_HOST = '104.248.133.84'
@@ -126,7 +125,7 @@ def callback_worker(call):
             "которых включена рыссылка?", c_id, call.message.id, parse_mode="HTML",
             reply_markup=keyboard)
         bot.register_next_step_handler(call.message, mailing)
-    elif call.data == "statistic":
+    elif call.data == "":
         statistic(call)
 
 
@@ -205,9 +204,9 @@ def get_weather(message, call=None):
                 f"{_district_text}" \
                 f"\n{_weather_text}" \
                 f"\n💨 Ветер: <b>{res['wind']}</b> метров в секунду" \
-                f"\n💦 Влажность: <b>{res['humidity']}</b> %" \
-                f"\n🌥 Облачность: <b>{res['clouds']}</b> %" \
-                f"\n👁 Видимость: <b>{res['visibility']}</b> метров" \
+                f"\n💦 Влажность: <b>{res['humidity']}%</b>" \
+                f"\n🌥 Облачность: <b>{res['clouds']}%</b>" \
+                f"\n👁 Видимость: <b>{res['visibility']} метров</b>" \
                 f"\n🌅 Восход солнца в <b>{res['sunrise']}</b>" \
                 f"\n🌄 Закат в <b>{res['sunset']}</b>" \
                 f"\n\n⏱ <i>Данные на {get_time()}</i>"
