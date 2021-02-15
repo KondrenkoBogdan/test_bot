@@ -125,7 +125,7 @@ def callback_worker(call):
             "которых включена рыссылка?", c_id, call.message.id, parse_mode="HTML",
             reply_markup=keyboard)
         bot.register_next_step_handler(call.message, mailing)
-    elif call.data == "":
+    elif call.data == "statistic":
         statistic(call)
 
 

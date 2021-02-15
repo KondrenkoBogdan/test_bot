@@ -38,10 +38,11 @@ def main_menu(message, is_start):
         chat = get_chat(c_id)
         keyboard.add(types.InlineKeyboardButton(text='👤 Личный кабинет', callback_data='account'))
     if chat[2] == 391796080:
-            keyboard.add(types.InlineKeyboardButton(text='Админка', callback_data='admin_panel'))
+        keyboard.add(types.InlineKeyboardButton(text='Админка', callback_data='admin_panel'))
     if is_start:
         bot.delete_message(c_id, message.id)
-        bot.send_message(c_id, text=f"👋 Доброе время суток, {chat[1]}\n❓ Чем можем вам помочь ?", reply_markup=keyboard)
+        bot.send_message(c_id, text=f"👋 Доброе время суток, {chat[1]}\n❓ Чем можем вам помочь ?",
+                         reply_markup=keyboard)
     else:
         bot.edit_message_text(f"👋 Доброе время суток, {chat[1]}\n❓ Чем можем вам помочь ?", c_id, message.id,
                               reply_markup=keyboard)
@@ -105,7 +106,8 @@ def mailing_false(call):
     keyboard.add(types.InlineKeyboardButton(text='🌤 Узнать погоду', callback_data='look_weather_main'))
     keyboard.add(types.InlineKeyboardButton(text='🔔 Подписаться на рассылку', callback_data='mailing_true'))
     keyboard.add(types.InlineKeyboardButton(text='↩️ В главное меню', callback_data='main_menu'))
-    bot.edit_message_text("🔕 <b>Рассылка прекращена</b>\n📣 Если что, Вы всегда можете поменять свой выбор.", c_id, call.message.id,
+    bot.edit_message_text("🔕 <b>Рассылка прекращена</b>\n📣 Если что, Вы всегда можете поменять свой выбор.", c_id,
+                          call.message.id,
                           reply_markup=keyboard, parse_mode="HTML")
 
 
@@ -163,8 +165,10 @@ def account(message):
     keyboard.add(_mailing_but)
     keyboard.add(types.InlineKeyboardButton("🌆 Поставить новый город", callback_data="new_city"))
     keyboard.add(types.InlineKeyboardButton("⬅️ В главное меню", callback_data="main_menu"))
-    bot.edit_message_text(f"👤 <b>Вы в личном кабинете</b>\n📝 Ваше имя: <b>{res[1]}</b>\n{_mailing_text}\n{_city_text}", c_id, message.id,
-                          reply_markup=keyboard, parse_mode="HTML")
+    bot.edit_message_text(
+        f"👤 <b>Вы в личном кабинете</b>\n📝 Ваше имя: <b>{res[1]}</b>\n{_mailing_text}\n{_city_text}", c_id,
+        message.id,
+        reply_markup=keyboard, parse_mode="HTML")
 
 
 def find_weather_forecast(name):
@@ -247,7 +251,8 @@ def set_chat_name(chat_id, name):
 def get_total_count():
     cursor.execute(f"SELECT COUNT(*) FROM chat_test_second")
     response = cursor.fetchall()
-    return response
+    return response[0][0]
+
 
 def get_mailing_clients():
     cursor.execute(f"SELECT * FROM chat_test_second WHERE (mailing=true)")
@@ -256,6 +261,33 @@ def get_mailing_clients():
         res = []
         for i in response:
             res.append(i)
+        return res
+    else:
+        return None
+
+
+def get_registered_count():
+    cursor.execute(f"SELECT COUNT(*) FROM chat_test_second WHERE (mailing is not null)")
+    res = cursor.fetchall()
+    if len(res) != 0:
+        return res[0][0]
+    else:
+        return None
+
+
+def get_subscribed_count():
+    cursor.execute(f"SELECT COUNT(*) FROM chat_test_second WHERE (mailing = true)")
+    res = cursor.fetchall()
+    if len(res) != 0:
+        return res[0][0]
+    else:
+        return None
+
+
+def get_all_users():
+    cursor.execute(f"SELECT * FROM chat_test_second")
+    res = cursor.fetchall()
+    if len(res) != 0:
         return res
     else:
         return None
@@ -273,7 +305,27 @@ def get_chat(chat_id):
 def statistic(call):
     c_id = chat_id(call)
     total_count = get_total_count()
-    bot.send_message(c_id, text=f"Всего зарегистрировано пользователей {total_count}")
+    sub_count = get_subscribed_count()
+    reg_count = get_registered_count()
+    all_users = get_all_users()
+    all_users_text = 'Спосок пользователей:'
+    index = 1
+    for u in all_users:
+        if u[5] is None:
+            _mailing_smile = "не зарегестрирован"
+        elif u[5]:
+            _mailing_smile = "🔔"
+        else:
+            _mailing_smile = "🔕"
+        all_users_text += f"\n<b>{index}.</b> {u[1]}, {u[3]}, {u[2]}, {_mailing_smile}, {u[6]}"
+        index += 1
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton("В главное меню", callback_data="main_menu"))
+    bot.edit_message_text(message_id=call.message.id, parse_mode="HTML", chat_id=c_id, reply_markup=keyboard,
+                          text=f"<b>Всего</b> пользователей <b>{total_count}</b>"
+                               f"\n<b>Зарегестрированных</b> пользователей <b>{reg_count}</b>"
+                               f"\n<b>Пользователей</b> с подпиской <b>{sub_count}</b>"
+                               f"\n{all_users_text}")
 
 
 def set_mailing(chat_id, bool):
@@ -309,8 +361,8 @@ def start_of_registration(message):
         keyboard.add(types.InlineKeyboardButton(text='👍 Да', callback_data='name_yes_' + _chat[1]))
         keyboard.add(types.InlineKeyboardButton(text='👎 Нет', callback_data='name_no'))
         bot.delete_message(c_id, message.id)
-        bot.send_message(c_id,  f"✏️ Начался процесс регистрации,"
-                                f" вас зовут {_chat[1]}?", reply_markup=keyboard)
+        bot.send_message(c_id, f"✏️ Начался процесс регистрации,"
+                               f" вас зовут {_chat[1]}?", reply_markup=keyboard)
 
 
 def chat_id(i):
