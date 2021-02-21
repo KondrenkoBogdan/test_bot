@@ -128,9 +128,9 @@ def get_time():
 def look_course(call):
     c_id = chat_id(call)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton('🇺🇸 USD 🇺🇸', callback_data='get-USD'))
-    keyboard.add(types.InlineKeyboardButton('🇪🇺 EUR 🇪🇺', callback_data='get-EUR'))
-    keyboard.add(types.InlineKeyboardButton('🇷🇺 RUR 🇷🇺', callback_data='get-RUR'))
+    keyboard.add(types.InlineKeyboardButton('🇺🇸 USD 🇺🇸', callback_data='course-USD'))
+    keyboard.add(types.InlineKeyboardButton('🇪🇺 EUR 🇪🇺', callback_data='course-EUR'))
+    keyboard.add(types.InlineKeyboardButton('🇷🇺 RUR 🇷🇺', callback_data='course-RUR'))
     keyboard.add(types.InlineKeyboardButton(text='↩️️ Назад ↩️', callback_data='main_menu'))
     bot.edit_message_text('📊 Выберите с чем хотите сравнить 🇺🇦UAH🇺🇦',
                           c_id, call.message.message_id, reply_markup=keyboard)
@@ -171,20 +171,35 @@ def account(message):
         reply_markup=keyboard, parse_mode="HTML")
 
 
-def find_weather_forecast(name):
-    url = f"http://api.openweathermap.org/data/2.5/forecast?q={name}&units=metric&appid=267e0592bf093a835ba1fffc762f9f70"
+def find_weather_seven(name):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={name}&units=metric&appid=267e0592bf093a835ba1fffc762f9f70&lang=ru"
     response = json.loads(requests.get(url).text)
+    lat = response['coord']['lat']
+    lon = response['coord']['lon']
+    main_url = f"http://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units=metric&exclude=current,hourly,minutely,alerts&appid=267e0592bf093a835ba1fffc762f9f70&lang=ru"
+    res = json.loads(requests.get(main_url).text)
+    if response['cod'] != 200:
+        return {"error": True, "message": response['message']}
+    else:
+        _text = f'🌆 <b>Прогноз на 7 дней в городе {name}</b> 👇\n\n'
+        for i in res['daily']:
+            _text += f'<b>⛅️ {config.get_day_by_unix(i["dt"])}</b>'
+            _text += f'\n   🌡 Темпаратур от <b>{round(float(i["temp"]["min"]))}</b> до <b>{round(float(i["temp"]["max"]))}</b>'
+            _text += f'\n   🌅 Утром <b>{round(float(i["temp"]["morn"]))}</b> ощущается как <b>{round(float(i["feels_like"]["morn"]))}</b>'
+            _text += f'\n   🌇 Днем <b>{round(float(i["temp"]["day"]))}</b> ощущается как <b>{round(float(i["feels_like"]["day"]))}</b>'
+            _text += f'\n   🌃 Вечером <b>{round(float(i["temp"]["eve"]))}</b> ощущается как <b>{round(float(i["feels_like"]["eve"]))}</b>\n'
+    return _text
 
 
 def find_weather_now(name):
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={name}&units=metric&appid=267e0592bf093a835ba1fffc762f9f70"
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={name}&units=metric&appid=267e0592bf093a835ba1fffc762f9f70&lang=ru"
     response = json.loads(requests.get(url).text)
     if response['cod'] != 200:
         return {"error": True, "message": response['message']}
     else:
         weathers = []
         for i in response["weather"]:
-            weathers.append(i['id'])
+            weathers.append([i['id'], i['description']])
         return {"error": False,
                 "temp": round(float(response['main']['temp'])),
                 "weather": weathers,
@@ -192,11 +207,41 @@ def find_weather_now(name):
                 "wind": response["wind"]["speed"],
                 "clouds": response['clouds']["all"],
                 "city": f"{response['name']}, {response['sys']['country']}",
-                "sunrise": time.strftime("%H:%M:%S", time.gmtime(response["sys"]["sunrise"])),
-                "sunset": time.strftime("%H:%M:%S", time.gmtime(response["sys"]["sunset"])),
+                "sunrise": time.strftime("%H:%M:%S", time.gmtime(response["sys"]["sunrise"]+7200)),
+                "sunset": time.strftime("%H:%M:%S", time.gmtime(response["sys"]["sunset"]+7200)),
                 "visibility": response["visibility"],
                 "feels": round(float(response["main"]["feels_like"])),
                 "districts": [round(float(response["main"]["temp_min"])), round(float(response["main"]["temp_max"]))]}
+
+
+def converter(call):
+    c_id = chat_id(call)
+    _course = call.data[10:13]
+    if _course == 'RUR':
+        _money_smile = "🇷🇺"
+    elif _course == 'EUR':
+        _money_smile = "🇪🇺"
+    elif _course == 'USD':
+        _money_smile = "🇺🇸"
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text=f"{_money_smile} Купить {_course + _money_smile}",
+                                            callback_data=f"buy-{_course}"))
+    keyboard.add(types.InlineKeyboardButton(text=f"{_money_smile} Продать {_course + _money_smile}",
+                                            callback_data=f"sel-{_course}"))
+    keyboard.add(types.InlineKeyboardButton(text="↩️ Назад", callback_data=f"course-{_course}"))
+    bot.edit_message_text("👇 Выберите, что Вы хотите сделать", c_id, call.message.message_id,
+                          reply_markup=keyboard, parse_mode="HTML")
+
+
+def course_menu(call):
+    c_id = chat_id(call)
+    _course = call.data[7:10]
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="🧮 Использовать конвертер валют 🧮", callback_data=f"converter-{_course}"))
+    keyboard.add(types.InlineKeyboardButton(text="📈 Посмотреть курс 📈", callback_data=f"get-{_course}"))
+    keyboard.add(types.InlineKeyboardButton(text="↩️ Назад ↩️", callback_data=f"look_course"))
+    bot.edit_message_text("👇 Выберите, что Вы хотите сделать", c_id, call.message.message_id,
+                          reply_markup=keyboard, parse_mode="HTML")
 
 
 def get_course(call):

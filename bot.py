@@ -25,24 +25,24 @@ WEBHOOK_URL_PATH = "/%s/" % (config.TOKEN)
 
 bot = telebot.TeleBot(config.TOKEN)
 
+if config.ENV == config.p:
+    class WebhookServer(object):
+        @cherrypy.expose
+        def index(self):
+            if 'content-length' in cherrypy.request.headers and \
+                    'content-type' in cherrypy.request.headers and \
+                    cherrypy.request.headers['content-type'] == 'application/json':
+                length = int(cherrypy.request.headers['content-length'])
+                json_string = cherrypy.request.body.read(length).decode("utf-8")
+                update = telebot.types.Update.de_json(json_string)
+                # Эта функция обеспечивает проверку входящего сообщения
+                bot.process_new_updates([update])
+                return ''
+            else:
+                raise cherrypy.HTTPError(403)
 
-class WebhookServer(object):
-    @cherrypy.expose
-    def index(self):
-        if 'content-length' in cherrypy.request.headers and \
-                'content-type' in cherrypy.request.headers and \
-                cherrypy.request.headers['content-type'] == 'application/json':
-            length = int(cherrypy.request.headers['content-length'])
-            json_string = cherrypy.request.body.read(length).decode("utf-8")
-            update = telebot.types.Update.de_json(json_string)
-            # Эта функция обеспечивает проверку входящего сообщения
-            bot.process_new_updates([update])
-            return ''
-        else:
-            raise cherrypy.HTTPError(403)
 
-
-@bot.message_handler(func=lambda message: True, content_types=['text'])
+@bot.message_handler(commands=['start'])
 def start_command(message):
     main_menu(message, True)
 
@@ -50,6 +50,7 @@ def start_command(message):
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def text(message):
     c_id = chat_id(message)
+    print("ASDASDSA")
     if message.text == '/reg':
         start_of_registration(message)
     else:
@@ -68,8 +69,31 @@ def callback_worker(call):
         look_course(call)
     elif data == "start_reg":
         start_of_registration(call.message)
+    elif data.startswith('sel-') or data.startswith('buy-'):
+        _course = call.data[4:7]
+        _type = None
+        if data.startswith('sel-'):
+            _type = "продать"
+        else:
+            _type = "купить"
+        if _course == "RUR":
+            _course_text = "🇷🇺RUR🇷🇺"
+        elif _course == "EUR":
+            _course_text = "🇪🇺EUR🇪🇺"
+        else:
+            _course_text = "🇺🇸USD🇺🇸"
+        bot.edit_message_text(f"💰Введите сколько <b>{_course_text}</b> вы хотите <b>{_type}</b>", c_id,
+                              call.message.id, parse_mode="HTML")
+        bot.register_next_step_handler(call.message, increment_course, data)
+    elif data.startswith('converter-'):
+        bot.disable_save_next_step_handlers()
+        converter(call)
+    elif data.startswith('course-'):
+        course_menu(call)
     elif data.startswith('get-'):
         get_course(call)
+    elif data.startswith('forecast-'):
+        get_weather_forecast(call.message, call)
     elif data.startswith('weather-'):
         get_weather(call.message, call)
     elif call.data == "mailing_false":
@@ -86,23 +110,48 @@ def callback_worker(call):
         c_id = chat_id(call)
         bot.edit_message_text("🌃 Введите город который хотите закрепить за собой 🌃", c_id, call.message.id)
         bot.register_next_step_handler(call.message, set_new_city_func)
+    elif call.data == "forecast_by_name":
+        c_id = chat_id(call)
+        bot.edit_message_text("🌤 Введите название города в котором хотите просмотреть прогноз на 7 дней", c_id, call.message.id)
+        bot.register_next_step_handler(call.message, get_weather_forecast)
+    elif call.data == "look_weather_by_name":
+        c_id = chat_id(call)
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(
+             types.InlineKeyboardButton(text='📆 Прогноз на 7 дней 📆', callback_data=f'forecast_by_name'))
+        keyboard.add(
+             types.InlineKeyboardButton(text='🌇 Погода сейчас 🌇', callback_data=f'look_weather_name'))
+        bot.edit_message_text("🌤 Выберите, что хотите просмотреть", c_id, call.message.id,
+                              reply_markup=keyboard)
+    elif call.data == "look_weather_my_place":
+        c_id = chat_id(call)
+        keyboard = types.InlineKeyboardMarkup()
+        _chat = get_chat(c_id)
+        keyboard.add(
+             types.InlineKeyboardButton(text='📆 Прогноз на 7 дней 📆', callback_data=f'forecast-{_chat[6]}'))
+        keyboard.add(
+             types.InlineKeyboardButton(text='🌇 Погода сейчас 🌇', callback_data=f'weather-{_chat[6]}'))
+        bot.edit_message_text("🌤 Выберите, что хотите просмотреть", c_id, call.message.id,
+                              reply_markup=keyboard)
     elif call.data == "look_weather_main":
         c_id = chat_id(call)
         keyboard = types.InlineKeyboardMarkup()
         _chat = get_chat(c_id)
         if _chat[6] is not None:
             keyboard.add(
-                types.InlineKeyboardButton(text='🌇 У себя в городе 🌇', callback_data=f'weather-{_chat[6]}'))
+                types.InlineKeyboardButton(text='🌇 У себя в городе 🌇', callback_data='look_weather_my_place'))
             keyboard.add(
-                types.InlineKeyboardButton(text='🏙 По названию города 🏙', callback_data='look_weather_name'))
-            keyboard.add(types.InlineKeyboardButton(text='⬅️ Назад ⬅️', callback_data='main_menu'))
+                types.InlineKeyboardButton(text='🏙 По названию города 🏙', callback_data='look_weather_by_name'))
+            keyboard.add(types.InlineKeyboardButton(text='↩️️ Назад️', callback_data='main_menu'))
             bot.edit_message_text("🌤 Выберите, где хотите посмотреть погоду", c_id, call.message.id,
                                   reply_markup=keyboard)
         else:
-            c_id = chat_id(call)
-            bot.edit_message_text("🌤 Введите название города в котором хотите узнать погоду", c_id,
-                                  call.message.id)
-            bot.register_next_step_handler(call.message, get_weather)
+            keyboard.add(
+                 types.InlineKeyboardButton(text='📆 Прогноз на 7 дней 📆', callback_data=f'forecast_by_name'))
+            keyboard.add(
+                 types.InlineKeyboardButton(text='🌇 Погода сейчас 🌇', callback_data=f'look_weather_name'))
+            bot.edit_message_text("🌤 Выберите, что хотите просмотреть", c_id, call.message.id,
+                                  reply_markup=keyboard)
     elif call.data == "look_weather_name":
         c_id = chat_id(call)
         bot.edit_message_text("🌤 Введите название города в котором хотите узнать погоду", c_id, call.message.id)
@@ -127,6 +176,49 @@ def callback_worker(call):
         bot.register_next_step_handler(call.message, mailing)
     elif call.data == "statistic":
         statistic(call)
+
+
+def increment_course(message, data):
+    c_id = chat_id(message)
+    _course = data[4:7]
+    _res = get_exchange(_course)
+    _money_count = 0
+    c = get_chat(c_id)
+    try:
+        _money_count = float(message.text)
+    except:
+        bot.send_message(c_id, text="Вы ввели не валидное число, попробуте еще раз."
+                                    " Если Вы хотите ввести не целое число вводите его через точку\n"
+                                    "❎ \"<s>20,50</s>\"\n"
+                                    "✅ \"<b>20.50</b>\"", parse_mode="HTML")
+        return bot.register_next_step_handler(message, increment_course, data)
+    if data.startswith('sel-'):
+        _type = "sale"
+    else:
+        _type = "buy"
+    if _course == "RUR":
+        _course_text = "RUR🇷🇺"
+    elif _course == "EUR":
+        _course_text = "EUR🇪🇺"
+    else:
+        _course_text = "USD🇺🇸"
+    _increment = _res[_type]
+    _answer_money = _money_count * float(_increment)
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="⬅️ ️В главное меню", callback_data="main_menu"))
+    keyboard.add(types.InlineKeyboardButton(text="↩️️ Назад", callback_data=data))
+    if _type == "sale":
+        bot.send_message(c_id, f"Продавая <b>{config.zero_destroyer(_money_count)} {_course_text}</b>"
+                               f" вы получите <b>{config.zero_destroyer(_answer_money)} UAH🇺🇦</b>",
+                         parse_mode="HTML", reply_markup=keyboard)
+    else:
+        bot.send_message(c_id, f"Цена за <b>{config.zero_destroyer(_money_count)} {_course_text}</b>"
+                               f" будет <b>{config.zero_destroyer(_answer_money)} UAH🇺🇦</b>",
+                         parse_mode="HTML", reply_markup=keyboard)
+    send_error(f"🌪 Пользователь  {c[1]}, {c[3]}, {c[2]} просмотрел столько будет стоить "
+               f"<b>{'продать' if _type == 'sale' else 'купить'} {config.zero_destroyer(_money_count)}"
+               f" {_course_text}</b>. Ответ {config.zero_destroyer(_answer_money)} гривень !")
+
 
 
 def set_new_city_func(message):
@@ -170,6 +262,24 @@ def set_new_city_func_reg(message):
                          reply_markup=keyboard, parse_mode="HTML")
 
 
+def get_weather_forecast(message, call=None):
+    c_id = chat_id(message)
+    c = get_chat(c_id)
+    if call is not None:
+        _city_name = call.data[9:]
+    else:
+        _city_name = message.text
+    res = find_weather_seven(_city_name)
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="↩️ В главное меню", callback_data="main_menu"))
+    if call is not None:
+        bot.edit_message_text(res, c_id, message.id, reply_markup=keyboard, parse_mode="HTML")
+    else:
+        bot.delete_message(c_id, message.id)
+        bot.send_message(c_id, text=res, reply_markup=keyboard, parse_mode="HTML")
+    send_error(f"🌪 Пользователь  {c[1]}, {c[3]}, {c[2]} просмотрел <b>ПРОГНОЗ</b> в <b>{_city_name}</b>.")
+
+
 def get_weather(message, call=None):
     c_id = chat_id(message)
     if call is not None:
@@ -187,11 +297,11 @@ def get_weather(message, call=None):
             _weather_smile = "❄️"
         _weather_text = ""
         if len(res['weather']) == 1:
-            _weather_text = f"<b>{config.get_weather_desription_by_id(res['weather'][0])}</b>"
+            _weather_text = f"<b>{config.get_weather_desription_by_id(res['weather'][0][0]) + res['weather'][0][1]}</b>"
         else:
             _weather_text = "🌤 Погода:"
             for i in res['weather']:
-                _weather_text += f"\n<b>{config.get_weather_desription_by_id(i)}</b>"
+                _weather_text += f"\n<b>{config.get_weather_desription_by_id(i[0]) + i[1]}</b>"
         if res['districts'][0] == res['districts'][1]:
             _district_text = ""
         else:
