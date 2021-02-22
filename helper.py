@@ -32,7 +32,7 @@ def main_menu(message, is_start):
     if _mailing is None:
         _name = message.chat.first_name
         _chat_login = message.chat.username
-        chat = set_chat(c_id, _name, _chat_login, "start")
+        chat = set_chat(c_id, _name, _chat_login)
         keyboard.add(types.InlineKeyboardButton(text='🖋 Зарегестрироваться для рассылки 👤', callback_data='start_reg'))
     else:
         chat = get_chat(c_id)
