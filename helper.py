@@ -26,25 +26,26 @@ bot = telebot.TeleBot(config.TOKEN)
 def main_menu(message, is_start):
     c_id = chat_id(message)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text='📈 Посмотреть курс валют', callback_data='look_course'))
-    keyboard.add(types.InlineKeyboardButton(text='🌤 Узнать погоду', callback_data='look_weather_main'))
+    keyboard.add(types.InlineKeyboardButton(text='📈 Курс и конвертер валют 📉', callback_data='look_course'))
+    keyboard.add(types.InlineKeyboardButton(text='❄️ Узнать погоду ☀️', callback_data='look_weather_main'))
     _mailing = get_mailing(c_id)
     if _mailing is None:
         _name = message.chat.first_name
         _chat_login = message.chat.username
         chat = set_chat(c_id, _name, _chat_login, "start")
-        keyboard.add(types.InlineKeyboardButton(text='👤 Зарегестрироваться для рассылки', callback_data='start_reg'))
+        keyboard.add(types.InlineKeyboardButton(text='🖋 Зарегестрироваться для рассылки 👤', callback_data='start_reg'))
     else:
         chat = get_chat(c_id)
-        keyboard.add(types.InlineKeyboardButton(text='👤 Личный кабинет', callback_data='account'))
+        keyboard.add(types.InlineKeyboardButton(text='🖋 Личный кабинет 👤', callback_data='account'))
     if chat[2] == 391796080:
-        keyboard.add(types.InlineKeyboardButton(text='Админка', callback_data='admin_panel'))
+        keyboard.add(types.InlineKeyboardButton(text='💻 Админка ⌨️', callback_data='admin_panel'))
+    _text = f"👋 Доброе время суток, {chat[1]}\n❓ Чем можем вам помочь ?"
     if is_start:
         bot.delete_message(c_id, message.id)
-        bot.send_message(c_id, text=f"👋 Доброе время суток, {chat[1]}\n❓ Чем можем вам помочь ?",
+        bot.send_message(c_id, text=_text,
                          reply_markup=keyboard)
     else:
-        bot.edit_message_text(f"👋 Доброе время суток, {chat[1]}\n❓ Чем можем вам помочь ?", c_id, message.id,
+        bot.edit_message_text(_text, c_id, message.id,
                               reply_markup=keyboard)
 
 
@@ -102,10 +103,10 @@ def mailing_false(call):
     c_id = chat_id(call)
     set_mailing(c_id, False)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text='📈 Посмотреть курс валют', callback_data='look_course'))
-    keyboard.add(types.InlineKeyboardButton(text='🌤 Узнать погоду', callback_data='look_weather_main'))
-    keyboard.add(types.InlineKeyboardButton(text='🔔 Подписаться на рассылку', callback_data='mailing_true'))
-    keyboard.add(types.InlineKeyboardButton(text='↩️ В главное меню', callback_data='main_menu'))
+    keyboard.add(types.InlineKeyboardButton(text='📈 Курс и конвертер валют 📈', callback_data='look_course'))
+    keyboard.add(types.InlineKeyboardButton(text='🌤 Узнать погоду 🌤', callback_data='look_weather_main'))
+    keyboard.add(types.InlineKeyboardButton(text='🔔 Подписаться на рассылку 🔔', callback_data='mailing_true'))
+    keyboard.add(types.InlineKeyboardButton(text='↩️ В главное меню ↩️', callback_data='main_menu'))
     bot.edit_message_text("🔕 <b>Рассылка прекращена</b>\n📣 Если что, Вы всегда можете поменять свой выбор.", c_id,
                           call.message.id,
                           reply_markup=keyboard, parse_mode="HTML")
@@ -183,11 +184,11 @@ def find_weather_seven(name):
     else:
         _text = f'🌆 <b>Прогноз на 7 дней в городе {name}</b> 👇\n\n'
         for i in res['daily']:
-            _text += f'<b>⛅️ {config.get_day_by_unix(i["dt"])}</b>'
-            _text += f'\n   🌡 Темпаратур от <b>{round(float(i["temp"]["min"]))}</b> до <b>{round(float(i["temp"]["max"]))}</b>'
+            _text += f'<b>⛅️ {config.get_day_by_unix(i["dt"])} {config.get_week_day_by_unix(i["dt"])}</b>'
+            _text += f'\n   🌡 Температур от <b>{round(float(i["temp"]["min"]))}</b> до <b>{round(float(i["temp"]["max"]))}</b>'
             _text += f'\n   🌅 Утром <b>{round(float(i["temp"]["morn"]))}</b> ощущается как <b>{round(float(i["feels_like"]["morn"]))}</b>'
             _text += f'\n   🌇 Днем <b>{round(float(i["temp"]["day"]))}</b> ощущается как <b>{round(float(i["feels_like"]["day"]))}</b>'
-            _text += f'\n   🌃 Вечером <b>{round(float(i["temp"]["eve"]))}</b> ощущается как <b>{round(float(i["feels_like"]["eve"]))}</b>\n'
+            _text += f'\n   🌃 Вечером <b>{round(float(i["temp"]["eve"]))}</b> ощущается как <b>{round(float(i["feels_like"]["eve"]))}</b>\n\n'
     return _text
 
 

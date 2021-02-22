@@ -3,12 +3,32 @@ p = "PRODUCTION"
 import time
 
 ENV = t
-if ENV == p:
+if ENV == t:
     TOKEN = '1495508310:AAFBqWcsUwsMTUFRo01XGIzgYG4T_hT4q9U'  # test
 else:
     TOKEN = '1670658089:AAGVaGq9hKX3cVbCxtM5PGhJMmhyU194m1A'  # prod
 TIMEZONE = 'Europe/Kiev'
 TIMEZONE_COMMON_NAME = 'Kiev, UA'
+
+
+def get_week_day_by_unix(unix):
+    res = int(time.strftime("%w", time.gmtime(unix)))
+    day = ''
+    if res == 0:
+        day = "воскресенье"
+    elif res == 1:
+        day = "понедельник"
+    elif res == 2:
+        day = "вторник"
+    elif res == 3:
+        day = "среда"
+    elif res == 4:
+        day = "четверг"
+    elif res == 5:
+        day = "пятница"
+    elif res == 6:
+        day = "суббота"
+    return day
 
 
 def zero_destroyer(num):

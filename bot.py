@@ -86,7 +86,6 @@ def callback_worker(call):
                               call.message.id, parse_mode="HTML")
         bot.register_next_step_handler(call.message, increment_course, data)
     elif data.startswith('converter-'):
-        bot.disable_save_next_step_handlers()
         converter(call)
     elif data.startswith('course-'):
         course_menu(call)
@@ -121,6 +120,7 @@ def callback_worker(call):
              types.InlineKeyboardButton(text='📆 Прогноз на 7 дней 📆', callback_data=f'forecast_by_name'))
         keyboard.add(
              types.InlineKeyboardButton(text='🌇 Погода сейчас 🌇', callback_data=f'look_weather_name'))
+        keyboard.add(types.InlineKeyboardButton(text="↩️️ Назад", callback_data='look_weather_main'))
         bot.edit_message_text("🌤 Выберите, что хотите просмотреть", c_id, call.message.id,
                               reply_markup=keyboard)
     elif call.data == "look_weather_my_place":
@@ -131,6 +131,7 @@ def callback_worker(call):
              types.InlineKeyboardButton(text='📆 Прогноз на 7 дней 📆', callback_data=f'forecast-{_chat[6]}'))
         keyboard.add(
              types.InlineKeyboardButton(text='🌇 Погода сейчас 🌇', callback_data=f'weather-{_chat[6]}'))
+        keyboard.add(types.InlineKeyboardButton(text="↩️️ Назад", callback_data='look_weather_main'))
         bot.edit_message_text("🌤 Выберите, что хотите просмотреть", c_id, call.message.id,
                               reply_markup=keyboard)
     elif call.data == "look_weather_main":
@@ -206,7 +207,7 @@ def increment_course(message, data):
     _answer_money = _money_count * float(_increment)
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="⬅️ ️В главное меню", callback_data="main_menu"))
-    keyboard.add(types.InlineKeyboardButton(text="↩️️ Назад", callback_data=data))
+    keyboard.add(types.InlineKeyboardButton(text="↩️️ Назад", callback_data=f"converter-{_course}"))
     if _type == "sale":
         bot.send_message(c_id, f"Продавая <b>{config.zero_destroyer(_money_count)} {_course_text}</b>"
                                f" вы получите <b>{config.zero_destroyer(_answer_money)} UAH🇺🇦</b>",
