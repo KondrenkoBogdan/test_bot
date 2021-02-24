@@ -14,7 +14,7 @@ _index = 1
 _success_mailing_text = ''
 for c in clients:
     _success_mailing_text += f"\n<b>{_index}.</b> {c[1]}, {c[2]}, {c[3]}, {c[6]}"
-    _index = _index +1
+    _index = _index + 1
     res = find_weather_now(c[6])
     if res['temp'] > 0:
         _weather_smile = "☀️"
@@ -27,11 +27,11 @@ for c in clients:
     _exchange = load_exchange()
     _course_text = "\n<b>Курс: 🇺🇦UAH🇺🇦 к:</b>"
     if len(res['weather']) == 1:
-        _weather_text = f"<b>{config.get_weather_desription_by_id(res['weather'][0])}</b>"
+        _weather_text = f"<b>{config.get_weather_desription_by_id(res['weather'][0][0]) + res['weather'][0][1]}</b>"
     else:
         _weather_text = "🌤 Погода:"
         for i in res['weather']:
-            _weather_text += f"\n<b>{config.get_weather_desription_by_id(i)}</b>"
+            _weather_text += f"\n<b>{config.get_weather_desription_by_id(i[0]) + i[1]}</b>"
     for i in _exchange:
         if i['ccy'] != "BTC":
             if i['ccy'] == "RUR":
@@ -57,6 +57,6 @@ for c in clients:
     bot.send_message(c[2], text=_text, reply_markup=keyboard, parse_mode="HTML")
 
 send_error(f"<b>Утренняя рассылка прошла успешно !"
-           f"\nБыло разосланно <b>{len(clients)}</b> сообщений</b>"
+           f"\nБыло разосланно {len(clients)} сообщений</b>"
            f"\nИнформация о тех, кто получил сообщение:"
            f"{_success_mailing_text}")

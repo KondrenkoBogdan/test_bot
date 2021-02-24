@@ -50,7 +50,6 @@ def start_command(message):
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def text(message):
     c_id = chat_id(message)
-    print("ASDASDSA")
     if message.text == '/reg':
         start_of_registration(message)
     else:
