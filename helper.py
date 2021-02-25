@@ -26,17 +26,19 @@ bot = telebot.TeleBot(config.TOKEN)
 def main_menu(message, is_start):
     c_id = chat_id(message)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text='📈 Курс и конвертер валют 📉', callback_data='look_course'))
-    keyboard.add(types.InlineKeyboardButton(text='❄️ Узнать погоду ☀️', callback_data='look_weather_main'))
     _mailing = get_mailing(c_id)
     if _mailing is None:
         _name = message.chat.first_name
         _chat_login = message.chat.username
         chat = set_chat(c_id, _name, _chat_login)
-        keyboard.add(types.InlineKeyboardButton(text='🖋 Зарегестрироваться для рассылки 👤', callback_data='start_reg'))
+        start_of_registration(message)
     else:
         chat = get_chat(c_id)
-        keyboard.add(types.InlineKeyboardButton(text='🖋 Личный кабинет 👤', callback_data='account'))
+        keyboard.add(types.InlineKeyboardButton(text='📈 Курс валют', callback_data='look_course'))
+        keyboard.add(types.InlineKeyboardButton(text='🧮 Конвертер валют', callback_data='converter_menu'))
+        keyboard.add(types.InlineKeyboardButton(text='❄️ Узнать погоду ☀️', callback_data='look_weather_main'))
+        keyboard.add(types.InlineKeyboardButton(text='👤 Личный кабинет ', callback_data='account'))
+        keyboard.add(types.InlineKeyboardButton(text='🖋 Оставить отзыв или пожелание', callback_data='feed_back'))
     if chat[2] == 391796080:
         keyboard.add(types.InlineKeyboardButton(text='💻 Админка ⌨️', callback_data='admin_panel'))
     _text = f"👋 Доброе время суток, {chat[1]}\n❓ Чем можем вам помочь ?"
@@ -53,42 +55,65 @@ def set_new_name(message):
     c_id = chat_id(message)
     set_chat_name(c_id, message.text)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text="⬅️ В главное меню", callback_data="main_menu"))
+    keyboard.add(types.InlineKeyboardButton(text="↩️ В главное меню", callback_data="main_menu"))
     bot.delete_message(c_id, message.id)
     bot.send_message(c_id, f"📩 Отличо, {message.text}, теперь мы будем обращаться к вам так !",
                      reply_markup=keyboard)
 
 
-def mailing(message):
-    clients = get_mailing_clients()
+def feed_back_menu(message):
+    c_id = chat_id(message)
+    chat = get_chat(c_id)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text="⬅️ В главное меню", callback_data='main_menu'))
-    keyboard.add(types.InlineKeyboardButton(text="🔕 Прекратить рассылку", callback_data='mailing_false'))
+    print(message)
+    keyboard.add(types.InlineKeyboardButton(text="↩️ Вернуться в главнео меню", callback_data="main_menu"))
+    send_error(f"☄️ <b>КЛИЕНТ ОСТАВИЛ ОТЗЫВ ИЛИ ПОЖЕЛАНИЕ</b> ☄️\n"
+               f"Пользователь  <b>{chat[1]}, {chat[3]}, {chat[2]}</b>\n"
+               f"Текст:\n<b>{message.text}</b>")
+    bot.send_message(c_id, f"Большое спасибо, мы ценим ваше мнение и обязательно его учтем !", reply_markup=keyboard)
+
+
+def mailing_all(message):
+    clients = get_all_users()
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="↩️ В главное меню", callback_data='main_menu'))
     for c in clients:
         bot.send_message(c[2], text=message.text, reply_markup=keyboard)
 
+
+def mailing(message):
+    clients = get_mailing_clients()
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="↩️ В главное меню", callback_data='main_menu'))
+    for c in clients:
+        bot.send_message(c[2], text=message.text, reply_markup=keyboard)
 
 
 def admin_panel(call):
     c_id = chat_id(call)
     keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text='📝 Создать рассылку ПО ВСЕМ', callback_data='mailing_all'))
     keyboard.add(types.InlineKeyboardButton(text='📝 Создать рассылку', callback_data='mailing'))
     keyboard.add(types.InlineKeyboardButton(text='📝 Статистика', callback_data='statistic'))
-    keyboard.add(types.InlineKeyboardButton(text='⬅️ В главное меню', callback_data='main_menu'))
+    keyboard.add(types.InlineKeyboardButton(text='↩️️ В главное меню', callback_data='main_menu'))
     bot.edit_message_text("Выберите, что хотите сделать", c_id, call.message.id, reply_markup=keyboard)
 
 
 def mailing_true(call):
     c_id = chat_id(call)
     set_mailing(c_id, True)
+    chat = get_chat(c_id)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text='📈 Посмотреть курс валют', callback_data='look_course'))
-    keyboard.add(types.InlineKeyboardButton(text='🌤 Узнать погоду', callback_data='look_weather_main'))
-    keyboard.add(types.InlineKeyboardButton(text='⬅️ В главное меню', callback_data='main_menu'))
+    keyboard.add(types.InlineKeyboardButton(text='📈 Курс валют', callback_data='look_course'))
+    keyboard.add(types.InlineKeyboardButton(text='🧮 Конвертер валют', callback_data='converter_menu'))
+    keyboard.add(types.InlineKeyboardButton(text='❄️ Узнать погоду ☀️', callback_data='look_weather_main'))
+    keyboard.add(types.InlineKeyboardButton(text='↩️ В главное меню', callback_data='main_menu'))
     bot.edit_message_text("⏱ Отлично, рассылка проходит в 08:00 и 18:00 по Киеву.\n"
                           "Но вы в любой момент можете зайти просмотреть интересующую вас информация сами", c_id,
                           call.message.id,
                           reply_markup=keyboard)
+    send_error(f"<b>ПОЛЬЗОВАТЕЛЬ ПОДПИСАЛСЯ НА РАССЫЛКУ</b>\n"
+               f"{chat[1]}, {chat[3]}, {chat[2]}")
 
 
 def mailing_refuse(call):
@@ -103,14 +128,18 @@ def mailing_refuse(call):
 def mailing_false(call):
     c_id = chat_id(call)
     set_mailing(c_id, False)
+    chat = get_chat(c_id)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text='📈 Курс и конвертер валют 📈', callback_data='look_course'))
-    keyboard.add(types.InlineKeyboardButton(text='🌤 Узнать погоду 🌤', callback_data='look_weather_main'))
+    keyboard.add(types.InlineKeyboardButton(text='📈 Курс валют', callback_data='look_course'))
+    keyboard.add(types.InlineKeyboardButton(text='🧮 Конвертер валют', callback_data='converter_menu'))
+    keyboard.add(types.InlineKeyboardButton(text='❄️ Узнать погоду ☀️', callback_data='look_weather_main'))
     keyboard.add(types.InlineKeyboardButton(text='🔔 Подписаться на рассылку 🔔', callback_data='mailing_true'))
     keyboard.add(types.InlineKeyboardButton(text='↩️ В главное меню ↩️', callback_data='main_menu'))
     bot.edit_message_text("🔕 <b>Рассылка прекращена</b>\n📣 Если что, Вы всегда можете поменять свой выбор.", c_id,
                           call.message.id,
                           reply_markup=keyboard, parse_mode="HTML")
+    send_error(f"<b>ПОЛЬЗОВАТЕЛЬ ЗАПРЕТИЛ РАССЫЛКУ</b>\n"
+               f"{chat[1]}, {chat[3]}, {chat[2]}")
 
 
 def load_exchange():
@@ -130,9 +159,9 @@ def get_time():
 def look_course(call):
     c_id = chat_id(call)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton('🇺🇸 USD 🇺🇸', callback_data='course-USD'))
-    keyboard.add(types.InlineKeyboardButton('🇪🇺 EUR 🇪🇺', callback_data='course-EUR'))
-    keyboard.add(types.InlineKeyboardButton('🇷🇺 RUR 🇷🇺', callback_data='course-RUR'))
+    keyboard.add(types.InlineKeyboardButton('🇺🇸 USD 🇺🇸', callback_data='get-USD'))
+    keyboard.add(types.InlineKeyboardButton('🇪🇺 EUR 🇪🇺', callback_data='get-EUR'))
+    keyboard.add(types.InlineKeyboardButton('🇷🇺 RUR 🇷🇺', callback_data='get-RUR'))
     keyboard.add(types.InlineKeyboardButton(text='↩️️ Назад ↩️', callback_data='main_menu'))
     bot.edit_message_text('📊 Выберите с чем хотите сравнить 🇺🇦UAH🇺🇦',
                           c_id, call.message.message_id, reply_markup=keyboard)
@@ -148,11 +177,11 @@ def set_new_city_db(chat_id, city):
 def account(message):
     c_id = chat_id(message)
     res = get_chat(c_id)
-    _mailing = res[5]
-    _city = res[6]
+    _mailing = res[4]
+    _city = res[5]
     _mailing_text = ""
     if _city is not None:
-        _city_text = f"🌇 Ваш город <b>{res[6]}</b>"
+        _city_text = f"🌇 Ваш город <b>{res[5]}</b>"
     else:
         _city_text = f"🌇 Ваш город не указан"
     if _mailing:
@@ -185,7 +214,8 @@ def find_weather_seven(name):
     else:
         _text = f'🌆 <b>Прогноз на 7 дней в городе {name}</b> 👇\n\n'
         for i in res['daily']:
-            _text += f'<b>⛅️ {config.get_day_by_unix(i["dt"])} {config.get_week_day_by_unix(i["dt"])}</b>'
+            _text += f'<b>⛅️ {config.get_day_by_unix(i["dt"])} {config.get_week_day_by_unix(i["dt"])} ' \
+                     f'{i["weather"][0]["description"]} - {config.get_icon(i["weather"][0]["icon"])}</b>'
             _text += f'\n   🌡 Температур от <b>{round(float(i["temp"]["min"]))}</b> до <b>{round(float(i["temp"]["max"]))}</b>'
             _text += f'\n   🌅 Утром <b>{round(float(i["temp"]["morn"]))}</b> ощущается как <b>{round(float(i["feels_like"]["morn"]))}</b>'
             _text += f'\n   🌇 Днем <b>{round(float(i["temp"]["day"]))}</b> ощущается как <b>{round(float(i["feels_like"]["day"]))}</b>'
@@ -201,7 +231,7 @@ def find_weather_now(name):
     else:
         weathers = []
         for i in response["weather"]:
-            weathers.append([i['id'], i['description']])
+            weathers.append([i['icon'], i['description']])
         return {"error": False,
                 "temp": round(float(response['main']['temp'])),
                 "weather": weathers,
@@ -214,6 +244,17 @@ def find_weather_now(name):
                 "visibility": response["visibility"],
                 "feels": round(float(response["main"]["feels_like"])),
                 "districts": [round(float(response["main"]["temp_min"])), round(float(response["main"]["temp_max"]))]}
+
+
+def converter_menu(call):
+    c_id = chat_id(call)
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton('🇺🇸 USD 🇺🇸', callback_data='converter-USD'))
+    keyboard.add(types.InlineKeyboardButton('🇪🇺 EUR 🇪🇺', callback_data='converter-EUR'))
+    keyboard.add(types.InlineKeyboardButton('🇷🇺 RUR 🇷🇺', callback_data='converter-RUR'))
+    keyboard.add(types.InlineKeyboardButton(text='↩️️ Назад ↩️', callback_data='main_menu'))
+    bot.edit_message_text("👇 Выберите, что Вы хотите обменять", c_id, call.message.message_id,
+                          reply_markup=keyboard, parse_mode="HTML")
 
 
 def converter(call):
@@ -230,7 +271,7 @@ def converter(call):
                                             callback_data=f"buy-{_course}"))
     keyboard.add(types.InlineKeyboardButton(text=f"{_money_smile} Продать {_course + _money_smile}",
                                             callback_data=f"sel-{_course}"))
-    keyboard.add(types.InlineKeyboardButton(text="↩️ Назад", callback_data=f"course-{_course}"))
+    keyboard.add(types.InlineKeyboardButton(text="↩️ Назад", callback_data=f"converter_menu"))
     bot.edit_message_text("👇 Выберите, что Вы хотите сделать", c_id, call.message.message_id,
                           reply_markup=keyboard, parse_mode="HTML")
 
@@ -399,8 +440,8 @@ def start_of_registration(message):
     c_id = chat_id(message)
     _chat = get_chat(c_id)
     keyboard = types.InlineKeyboardMarkup()
-    print(message)
-    if _chat[5] is not None:
+    print(_chat)
+    if _chat[5] is not None and _chat[4] is not None:
         keyboard.add(types.InlineKeyboardButton(text='В главнео меню', callback_data='main_menu'))
         bot.delete_message(c_id, message.id)
         bot.send_message(c_id, f"Вы уже зарегестрированный пользователь", reply_markup=keyboard)
@@ -429,7 +470,7 @@ def get_mailing(c_id):
 
 
 def send_error(message):
-    url = f'https://api.telegram.org/bot1601883845:AAHhUg8-cmdsyfACZ3kqx8U-xwFV9BfTQQU/sendMessage'
+    url = f'https://api.telegram.org/bot1637822207:AAEJDDtLzjWco27nV5JQDWSVP07k2Xsn86Y/sendMessage'
     data = {
         'chat_id': 391796080,
         'text': message,

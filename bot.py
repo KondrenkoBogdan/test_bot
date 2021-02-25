@@ -66,6 +66,12 @@ def callback_worker(call):
     data = call.data
     if data == "look_course":
         look_course(call)
+    elif data == "feed_back":
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton(text="↩️ Назад", callback_data="main_menu"))
+        bot.edit_message_text(f"✏️ Отправьте ваш отзыв, замечание или пожелание сюда, мы моментально его получим! 🛎",
+                              c_id, call.message.id, parse_mode="HTML", reply_markup=keyboard)
+        bot.register_next_step_handler(call.message, feed_back_menu)
     elif data == "start_reg":
         start_of_registration(call.message)
     elif data.startswith('sel-') or data.startswith('buy-'):
@@ -84,6 +90,8 @@ def callback_worker(call):
         bot.edit_message_text(f"💰Введите сколько <b>{_course_text}</b> вы хотите <b>{_type}</b>", c_id,
                               call.message.id, parse_mode="HTML")
         bot.register_next_step_handler(call.message, increment_course, data)
+    elif data.startswith('converter_menu'):
+        converter_menu(call)
     elif data.startswith('converter-'):
         converter(call)
     elif data.startswith('course-'):
@@ -166,12 +174,20 @@ def callback_worker(call):
         bot.register_next_step_handler(call.message, set_name)
     elif call.data == "admin_panel":
         admin_panel(call)
+    elif call.data == "mailing_all":
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton(text="В главное меню", callback_data="main_menu"))
+        bot.edit_message_text(
+            "📣 Напишите текст, этот текст будет <b>МОМЕНТАЛЬНО</b> разослан по <b>ВСЕМ</b> подписчикам",
+            c_id, call.message.id, parse_mode="HTML",
+            reply_markup=keyboard)
+        bot.register_next_step_handler(call.message, mailing_all)
     elif call.data == "mailing":
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(types.InlineKeyboardButton(text="В главное меню", callback_data="main_menu"))
         bot.edit_message_text(
             "📣 Напишите текст, этот текст будет <b>МОМЕНТАЛЬНО</b> разослан по всем подписчикам у "
-            "которых включена рыссылка?", c_id, call.message.id, parse_mode="HTML",
+            "которых включена рыссылка", c_id, call.message.id, parse_mode="HTML",
             reply_markup=keyboard)
         bot.register_next_step_handler(call.message, mailing)
     elif call.data == "statistic":
@@ -220,7 +236,6 @@ def increment_course(message, data):
                f" {_course_text}</b>. Ответ {config.zero_destroyer(_answer_money)} гривень !")
 
 
-
 def set_new_city_func(message):
     c_id = chat_id(message)
     _res = find_weather_now(message.text)
@@ -236,7 +251,7 @@ def set_new_city_func(message):
         set_new_city_db(c_id, message.text)
         bot.send_message(c_id, text=f"🌇 Отлично, город <b>{message.text}</b> закреплен за вами. 🌇\n"
                                     f"{_weather_smile} Кстати, там сейчас <b>{_res['temp']}</b> градусов и "
-                                    f"<b>{config.get_weather_desription_by_id(_res['weather'][0])}.</b>",
+                                    f"<b>{_res['weather'][0][1] + config.get_icon(_res['weather'][0][0])}.</b>",
                          reply_markup=keyboard, parse_mode="HTML")
 
 
@@ -256,7 +271,7 @@ def set_new_city_func_reg(message):
         set_new_city_db(c_id, message.text)
         bot.send_message(c_id, text=f"🌇 Отлично, город <b>{message.text}</b> закреплен за вами. 🌇\n"
                                     f"{_weather_smile} Кстати, там сейчас <b>{_res['temp']}</b> градусов и "
-                                    f"<b>{config.get_weather_desription_by_id(_res['weather'][0])}.</b>\n\n"
+                                    f"<b>{_res['weather'][0][1] + config.get_icon(_res['weather'][0][0])}.</b>\n\n"
                                     f"🔔<b>Продолжим.</b> Хотите ли вы получать от нас рассылку с погодой Вашего города"
                                     f" и курсом гривны в 8:00 и 18:00 ?",
                          reply_markup=keyboard, parse_mode="HTML")
@@ -297,11 +312,11 @@ def get_weather(message, call=None):
             _weather_smile = "❄️"
         _weather_text = ""
         if len(res['weather']) == 1:
-            _weather_text = f"<b>{config.get_weather_desription_by_id(res['weather'][0][0]) + res['weather'][0][1]}</b>"
+            _weather_text = f"<b>{config.get_icon(res['weather'][0][0]) + res['weather'][0][1]}</b>"
         else:
             _weather_text = "🌤 Погода:"
             for i in res['weather']:
-                _weather_text += f"\n<b>{config.get_weather_desription_by_id(i[0]) + i[1]}</b>"
+                _weather_text += f"\n<b>{config.get_icon(i[0]) + i[1]}</b>"
         if res['districts'][0] == res['districts'][1]:
             _district_text = ""
         else:

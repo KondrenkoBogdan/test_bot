@@ -54,6 +54,30 @@ def get_day_by_unix(t):
     return time.strftime("%d.%m", time.gmtime(t))
 
 
+def get_icon(i):
+    types = {
+        '01d': "☀️",
+        '02d': "⛅️",
+        '03d': "☁️",
+        '04d': "☁",
+        '09d': "🌧",
+        '10d': "🌦",
+        '11d': "⛈",
+        '13d': "❄️",
+        '50d': "🌫",
+        '01n': "🌙",
+        '02n': "☁️",
+        '03n': "☁",
+        '04n': "☁",
+        '09n': "🌧",
+        '10n': "🌧",
+        '11n': "⛈",
+        '13n': "❄",
+        '50n': "🌫",
+    }
+    return types[i]
+
+
 def get_weather_desription_by_id(w_id):
     types = {
         200: "⛈ ",

@@ -27,11 +27,11 @@ for c in clients:
     _exchange = load_exchange()
     _course_text = "\n<b>Курс: 🇺🇦UAH🇺🇦 к:</b>"
     if len(res['weather']) == 1:
-        _weather_text = f"<b>{config.get_weather_desription_by_id(res['weather'][0][0]) + res['weather'][0][1]}</b>"
+        _weather_text = f"<b>{config.get_icon(res['weather'][0][0]) + res['weather'][0][1]}</b>"
     else:
         _weather_text = "🌤 Погода:"
         for i in res['weather']:
-            _weather_text += f"\n<b>{config.get_weather_desription_by_id(i[0]) + i[1]}</b>"
+            _weather_text += f"\n<b>{config.get_icon(i[0]) + i[1]}</b>"
     for i in _exchange:
         if i['ccy'] != "BTC":
             if i['ccy'] == "RUR":
