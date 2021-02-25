@@ -65,7 +65,6 @@ def feed_back_menu(message):
     c_id = chat_id(message)
     chat = get_chat(c_id)
     keyboard = types.InlineKeyboardMarkup()
-    print(message)
     keyboard.add(types.InlineKeyboardButton(text="↩️ Вернуться в главнео меню", callback_data="main_menu"))
     send_error(f"☄️ <b>КЛИЕНТ ОСТАВИЛ ОТЗЫВ ИЛИ ПОЖЕЛАНИЕ</b> ☄️\n"
                f"Пользователь  <b>{chat[1]}, {chat[3]}, {chat[2]}</b>\n"
@@ -440,7 +439,6 @@ def start_of_registration(message):
     c_id = chat_id(message)
     _chat = get_chat(c_id)
     keyboard = types.InlineKeyboardMarkup()
-    print(_chat)
     if _chat[5] is not None and _chat[4] is not None:
         keyboard.add(types.InlineKeyboardButton(text='В главнео меню', callback_data='main_menu'))
         bot.delete_message(c_id, message.id)
