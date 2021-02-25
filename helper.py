@@ -215,7 +215,7 @@ def find_weather_seven(name):
         _text = f'🌆 <b>Прогноз на 7 дней в городе {name}</b> 👇\n\n'
         for i in res['daily']:
             _text += f'<b>⛅️ {config.get_day_by_unix(i["dt"])} {config.get_week_day_by_unix(i["dt"])} ' \
-                     f'{i["weather"][0]["description"]} - {config.get_icon(i["weather"][0]["icon"])}</b>'
+                     f'{i["weather"][0]["description"]} {config.get_icon(i["weather"][0]["icon"])}</b>'
             _text += f'\n   🌡 Температур от <b>{round(float(i["temp"]["min"]))}</b> до <b>{round(float(i["temp"]["max"]))}</b>'
             _text += f'\n   🌅 Утром <b>{round(float(i["temp"]["morn"]))}</b> ощущается как <b>{round(float(i["feels_like"]["morn"]))}</b>'
             _text += f'\n   🌇 Днем <b>{round(float(i["temp"]["day"]))}</b> ощущается как <b>{round(float(i["feels_like"]["day"]))}</b>'
