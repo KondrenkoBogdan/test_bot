@@ -10,15 +10,16 @@ connection = psycopg2.connect(user="galina_semenovna",
                               database="bot_database")
 cursor = connection.cursor()
 cursor.execute(f"CREATE TABLE IF NOT EXISTS chat_test_second (id SERIAL PRIMARY KEY, name VARCHAR NOT NULL,"
-               f" chat_id INT NOT NULL, chat_login VARCHAR NOT NULL, mailing BOOL, city VARCHAR)")
+               f" chat_id INT NOT NULL, chat_login VARCHAR NOT NULL, position VARCHAR, mailing BOOL,"
+               f" city VARCHAR, lat FLOAT, lon FLOAT)")
 connection.commit()
 
 WEBHOOK_HOST = '104.248.133.84'
-WEBHOOK_PORT = 443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
-WEBHOOK_LISTEN = '104.248.133.84'  # На некоторых серверах придется указывать такой же IP, что и выше
+WEBHOOK_PORT = 443
+WEBHOOK_LISTEN = '104.248.133.84'
 
-WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Путь к сертификату
-WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Путь к приватному ключу
+WEBHOOK_SSL_CERT = './webhook_cert.pem'
+WEBHOOK_SSL_PRIV = './webhook_pkey.pem'
 
 WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
 WEBHOOK_URL_PATH = "/%s/" % (config.TOKEN)

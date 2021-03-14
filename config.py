@@ -4,9 +4,10 @@ import time
 
 ENV = t
 if ENV == p:
-    TOKEN = '1495508310:AAFBqWcsUwsMTUFRo01XGIzgYG4T_hT4q9U'  # test
-else:
     TOKEN = '1670658089:AAGVaGq9hKX3cVbCxtM5PGhJMmhyU194m1A'  # prod
+else:
+    TOKEN = '1495508310:AAELHcaFKflCMiJBK3cEiaSo1zGPSJLjtoo'  # test
+LOG_TOKEN = '1637822207:AAFvz8eqeR5SidFpYqtGctMcR0O83i3Y-3k'
 TIMEZONE = 'Europe/Kiev'
 TIMEZONE_COMMON_NAME = 'Kiev, UA'
 

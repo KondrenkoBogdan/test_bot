@@ -468,7 +468,8 @@ def get_mailing(c_id):
 
 
 def send_error(message):
-    url = f'https://api.telegram.org/bot1637822207:AAEJDDtLzjWco27nV5JQDWSVP07k2Xsn86Y/sendMessage'
+
+    url = f'https://api.telegram.org/bot{config.LOG_TOKEN}/sendMessage'
     data = {
         'chat_id': 391796080,
         'text': message,
