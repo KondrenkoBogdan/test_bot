@@ -176,11 +176,11 @@ def set_new_city_db(chat_id, city):
 def account(message):
     c_id = chat_id(message)
     res = get_chat(c_id)
-    _mailing = res[4]
-    _city = res[5]
+    _mailing = res[5]
+    _city = res[6]
     _mailing_text = ""
     if _city is not None:
-        _city_text = f"🌇 Ваш город <b>{res[5]}</b>"
+        _city_text = f"🌇 Ваш город <b>{_city}</b>"
     else:
         _city_text = f"🌇 Ваш город не указан"
     if _mailing:

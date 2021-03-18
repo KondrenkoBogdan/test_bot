@@ -379,6 +379,12 @@ def error_worker(c_id, message, _res, call_back):
     send_error(f"🆘 У пользователя  {c[1]}, {c[3]}, {c[2]} упала ошибка {_res}. Он вводил {message.text}")
 
 
+print(config.t)
+print(config.t)
+print(config.t)
+print(config.ENV)
+print(config.ENV)
+print(config.ENV)
 bot.remove_webhook()
 if config.ENV == config.t:
     bot.polling(none_stop=True)
