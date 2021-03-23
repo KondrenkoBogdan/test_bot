@@ -1,6 +1,5 @@
 import cherrypy
 import telebot
-
 import config
 from helper import *
 
@@ -43,6 +42,11 @@ if config.ENV == config.p:
                 raise cherrypy.HTTPError(403)
 
 
+@bot.message_handler(commands=['check_db'])
+def start_command(message):
+    check_db(message)
+
+
 @bot.message_handler(commands=['start'])
 def start_command(message):
     main_menu(message, True)
@@ -75,20 +79,24 @@ def callback_worker(call):
         bot.register_next_step_handler(call.message, feed_back_menu)
     elif data == "start_reg":
         start_of_registration(call.message)
-    elif data.startswith('sel-') or data.startswith('buy-'):
+    elif data.startswith('sel-') or data.startswith('buy-') or data.startswith('uah-') or data.startswith('oth-'):
         _course = call.data[4:7]
         _type = None
-        if data.startswith('sel-'):
-            _type = "продать"
-        else:
-            _type = "купить"
         if _course == "RUR":
             _course_text = "🇷🇺RUR🇷🇺"
         elif _course == "EUR":
             _course_text = "🇪🇺EUR🇪🇺"
         else:
             _course_text = "🇺🇸USD🇺🇸"
-        bot.edit_message_text(f"💰Введите сколько <b>{_course_text}</b> вы хотите <b>{_type}</b>", c_id,
+        if data.startswith('sel-'):
+            _text = f"💰Введите сколько <b>{_course_text}</b> вы хотите <b>продать</b> за <b>🇺🇦UAH🇺🇦</b>"
+        elif data.startswith('buy-'):
+            _text = f"💰Введите сколько <b>{_course_text}</b> вы хотите <b>купить</b> за <b>🇺🇦UAH🇺🇦</b>"
+        elif data.startswith('uah-'):
+            _text = f"💰Введите сколько <b>🇺🇦UAH🇺🇦</b> вы хотите <b>купить</b> за {_course_text}"
+        else:
+            _text = f"💰Введите сколько <b>🇺🇦UAH🇺🇦</b> вы хотите <b>продать</b> за {_course_text}"
+        bot.edit_message_text(_text, c_id,
                               call.message.id, parse_mode="HTML")
         bot.register_next_step_handler(call.message, increment_course, data)
     elif data.startswith('converter_menu'):
@@ -209,7 +217,7 @@ def increment_course(message, data):
                                     "❎ \"<s>20,50</s>\"\n"
                                     "✅ \"<b>20.50</b>\"", parse_mode="HTML")
         return bot.register_next_step_handler(message, increment_course, data)
-    if data.startswith('sel-'):
+    if data.startswith('buy-') or data.startswith('oth-'):
         _type = "sale"
     else:
         _type = "buy"
@@ -219,22 +227,30 @@ def increment_course(message, data):
         _course_text = "EUR🇪🇺"
     else:
         _course_text = "USD🇺🇸"
+    _course_all_text = f"\n\n🏦 <b>Источник:</b> ПриватБанк 🏪\n\n⚖️ Покупка: {_res['buy']}\n⚖️ Продажа: {_res['sale']}"
     _increment = _res[_type]
-    _answer_money = _money_count * float(_increment)
+    if data.startswith('sel-') or data.startswith('buy-'):
+        _answer_money = _money_count * float(_increment)
+    else:
+        _answer_money = _money_count / float(_increment)
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="⬅️ ️В главное меню", callback_data="main_menu"))
     keyboard.add(types.InlineKeyboardButton(text="↩️️ Назад", callback_data=f"converter-{_course}"))
-    if _type == "sale":
-        bot.send_message(c_id, f"Продавая <b>{config.zero_destroyer(_money_count)} {_course_text}</b>"
-                               f" вы получите <b>{config.zero_destroyer(_answer_money)} UAH🇺🇦</b>",
-                         parse_mode="HTML", reply_markup=keyboard)
+    if data.startswith('sel-'):
+        _text = f'Продавая <b>{config.zero_destroyer(_money_count)} {_course_text}</b>'\
+                   f' Вы получите <b>{int(_answer_money)} UAH🇺🇦</b>'
+    elif data.startswith('buy-'):
+        _text = f"Покупая <b>{config.zero_destroyer(_money_count)} {_course_text}</b>"\
+                   f" Вы отдадите <b>{int(_answer_money)} UAH🇺🇦</b>"
+    elif data.startswith('uah-'):
+        _text = f'Покупая <b>{config.zero_destroyer(_money_count)} UAH🇺🇦</b>'\
+                f'Вы отдадите <b>{int(_answer_money)} {_course_text}</b>'
     else:
-        bot.send_message(c_id, f"Цена за <b>{config.zero_destroyer(_money_count)} {_course_text}</b>"
-                               f" будет <b>{config.zero_destroyer(_answer_money)} UAH🇺🇦</b>",
-                         parse_mode="HTML", reply_markup=keyboard)
-    send_error(f"🌪 Пользователь  {c[1]}, {c[3]}, {c[2]} просмотрел столько будет стоить "
-               f"<b>{'продать' if _type == 'sale' else 'купить'} {config.zero_destroyer(_money_count)}"
-               f" {_course_text}</b>. Ответ {config.zero_destroyer(_answer_money)} гривень !")
+        _text = f'Продавая <b>{config.zero_destroyer(_money_count)} UAH🇺🇦</b>'\
+                   f' Вы получите <b>{int(_answer_money)} {_course_text}</b>'
+    _text += _course_all_text
+    bot.send_message(c_id, _text, parse_mode="HTML", reply_markup=keyboard)
+    send_error(f"🌪 Пользователь  {c[1]}, {c[3]}, {c[2]} использовал конвертер {data}")
 
 
 def set_new_city_func(message):
@@ -364,20 +380,22 @@ def set_name(message):
 
 
 def error_worker(c_id, message, _res, call_back):
-    keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton('↩️ Вернуться в главное меню ↩️', callback_data=f'main_menu'))
-    c = get_chat(c_id)
-    if _res["message"] == "city not found":
-        msg = bot.send_message(c_id, "🤷🏼 Данного места не найдено, попробуйте еще раз 🤷🏼",
-                               reply_markup=keyboard)
-    else:
-        msg = bot.send_message(c_id,
-                               f"Произошла ошибка попробуйте еще раз или позже. Сообщени ошибки {_res['message']}."
-                               f" Нам уже пришло уведомление об этом.",
-                               reply_markup=keyboard)
-    bot.register_next_step_handler(msg, call_back)
-    send_error(f"🆘 У пользователя  {c[1]}, {c[3]}, {c[2]} упала ошибка {_res}. Он вводил {message.text}")
-
+    try:
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton('↩️ Вернуться в главное меню ↩️', callback_data=f'main_menu'))
+        c = get_chat(c_id)
+        if _res["message"] == "city not found":
+            msg = bot.send_message(c_id, "🤷🏼 Данного места не найдено, попробуйте еще раз 🤷🏼",
+                                   reply_markup=keyboard)
+        else:
+            msg = bot.send_message(c_id,
+                                   f"Произошла ошибка попробуйте еще раз или позже. Сообщени ошибки {_res['message']}."
+                                   f" Нам уже пришло уведомление об этом.",
+                                   reply_markup=keyboard)
+        bot.register_next_step_handler(msg, call_back)
+        send_error(f"🆘 У пользователя  {c[1]}, {c[3]}, {c[2]} упала ошибка {_res}. Он вводил {message.text}")
+    except:
+        send_error(f"У ошибки - ошибка, я в шоке блин")
 
 print(config.t)
 print(config.t)

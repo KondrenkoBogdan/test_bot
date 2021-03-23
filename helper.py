@@ -30,8 +30,8 @@ def main_menu(message, is_start):
     if _mailing is None:
         _name = message.chat.first_name
         _chat_login = message.chat.username
-        chat = set_chat(c_id, _name, _chat_login)
-        start_of_registration(message)
+        set_chat(c_id, _name, _chat_login)
+        return start_of_registration(message)
     else:
         chat = get_chat(c_id)
         keyboard.add(types.InlineKeyboardButton(text='📈 Курс валют', callback_data='look_course'))
@@ -76,16 +76,30 @@ def mailing_all(message):
     clients = get_all_users()
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="↩️ В главное меню", callback_data='main_menu'))
+    _unsub_text = ''
     for c in clients:
-        bot.send_message(c[2], text=message.text, reply_markup=keyboard)
+        try:
+            bot.send_message(c[2], text=message.text, reply_markup=keyboard)
+        except:
+            _unsub_text += f"\n{c[0]} {c[1]} {c[2]} {c[3]} {c[4]} {c[5]} {c[6]} {c[7]} {c[8]}"
+            delete_client_by_chat_id(c[2])
+    if _unsub_text != "":
+        send_error("<b>Отписались</b>" + _unsub_text)
 
 
 def mailing(message):
     clients = get_mailing_clients()
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="↩️ В главное меню", callback_data='main_menu'))
+    _unsub_text = ''
     for c in clients:
-        bot.send_message(c[2], text=message.text, reply_markup=keyboard)
+        try:
+            bot.send_message(c[2], text=message.text, reply_markup=keyboard)
+        except:
+            _unsub_text += f"\n{c[0]} {c[1]} {c[2]} {c[3]} {c[4]} {c[5]} {c[6]} {c[7]} {c[8]}"
+            delete_client_by_chat_id(c[2])
+    if _unsub_text != "":
+        send_error("<b>Отписались</b>" + _unsub_text)
 
 
 def admin_panel(call):
@@ -238,8 +252,8 @@ def find_weather_now(name):
                 "wind": response["wind"]["speed"],
                 "clouds": response['clouds']["all"],
                 "city": f"{response['name']}, {response['sys']['country']}",
-                "sunrise": time.strftime("%H:%M:%S", time.gmtime(response["sys"]["sunrise"]+7200)),
-                "sunset": time.strftime("%H:%M:%S", time.gmtime(response["sys"]["sunset"]+7200)),
+                "sunrise": time.strftime("%H:%M:%S", time.gmtime(response["sys"]["sunrise"] + 7200)),
+                "sunset": time.strftime("%H:%M:%S", time.gmtime(response["sys"]["sunset"] + 7200)),
                 "visibility": response["visibility"],
                 "feels": round(float(response["main"]["feels_like"])),
                 "districts": [round(float(response["main"]["temp_min"])), round(float(response["main"]["temp_max"]))]}
@@ -263,13 +277,17 @@ def converter(call):
         _money_smile = "🇷🇺"
     elif _course == 'EUR':
         _money_smile = "🇪🇺"
-    elif _course == 'USD':
+    else:
         _money_smile = "🇺🇸"
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text=f"{_money_smile} Купить {_course + _money_smile}",
+    keyboard.add(types.InlineKeyboardButton(text=f"Купить {_money_smile + _course} за UAH 🇺🇦",
                                             callback_data=f"buy-{_course}"))
-    keyboard.add(types.InlineKeyboardButton(text=f"{_money_smile} Продать {_course + _money_smile}",
+    keyboard.add(types.InlineKeyboardButton(text=f"Продать {_money_smile + _course} за UAH 🇺🇦",
                                             callback_data=f"sel-{_course}"))
+    keyboard.add(types.InlineKeyboardButton(text=f"Купить 🇺🇦 UAH за {_course + _money_smile}",
+                                            callback_data=f"uah-{_course}"))
+    keyboard.add(types.InlineKeyboardButton(text=f"Продать 🇺🇦 UAH за {_course + _money_smile}",
+                                            callback_data=f"oth-{_course}"))
     keyboard.add(types.InlineKeyboardButton(text="↩️ Назад", callback_data=f"converter_menu"))
     bot.edit_message_text("👇 Выберите, что Вы хотите сделать", c_id, call.message.message_id,
                           reply_markup=keyboard, parse_mode="HTML")
@@ -279,7 +297,8 @@ def course_menu(call):
     c_id = chat_id(call)
     _course = call.data[7:10]
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text="🧮 Использовать конвертер валют 🧮", callback_data=f"converter-{_course}"))
+    keyboard.add(
+        types.InlineKeyboardButton(text="🧮 Использовать конвертер валют 🧮", callback_data=f"converter-{_course}"))
     keyboard.add(types.InlineKeyboardButton(text="📈 Посмотреть курс 📈", callback_data=f"get-{_course}"))
     keyboard.add(types.InlineKeyboardButton(text="↩️ Назад ↩️", callback_data=f"look_course"))
     bot.edit_message_text("👇 Выберите, что Вы хотите сделать", c_id, call.message.message_id,
@@ -415,6 +434,25 @@ def statistic(call):
                                f"\n{all_users_text}")
 
 
+def check_db(message):
+    c_id = chat_id(message)
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton("В главное меню", callback_data="main_menu"))
+    if c_id == 391796080:
+        _users = get_all_users()
+        _text = ""
+        for i in _users:
+            _text += f"\n<b>{i[0]}.</b> {i[1]} {i[2]} {i[3]} {i[4]} {i[5]} {i[6]} {i[7]} {i[8]} "
+    else:
+        _text = "У вас недостаточно прав для этой команды"
+    bot.send_message(c_id, _text, reply_markup=keyboard, parse_mode="HTML")
+
+
+def delete_client_by_chat_id(chat_id):
+    cursor.execute(f"DELETE FROM chat_test_second WHERE chat_id = '{chat_id}'")
+    connection.commit()
+
+
 def set_mailing(chat_id, bool):
     cursor.execute(f"UPDATE chat_test_second SET mailing = '{bool}' WHERE chat_id = '{chat_id}'")
     connection.commit()
@@ -446,7 +484,6 @@ def start_of_registration(message):
     else:
         keyboard.add(types.InlineKeyboardButton(text='👍 Да', callback_data='name_yes_' + _chat[1]))
         keyboard.add(types.InlineKeyboardButton(text='👎 Нет', callback_data='name_no'))
-        bot.delete_message(c_id, message.id)
         bot.send_message(c_id, f"✏️ Начался процесс регистрации,"
                                f" вас зовут {_chat[1]}?", reply_markup=keyboard)
 
@@ -468,7 +505,6 @@ def get_mailing(c_id):
 
 
 def send_error(message):
-
     url = f'https://api.telegram.org/bot{config.LOG_TOKEN}/sendMessage'
     data = {
         'chat_id': 391796080,
