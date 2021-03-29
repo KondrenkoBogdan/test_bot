@@ -62,7 +62,7 @@ def text(message):
         keyboard.add(types.InlineKeyboardButton(text='⬅️ В главнео меню', callback_data='main_menu'))
         bot.send_message(c_id, text="🤷🏼 Бот вас не понял", reply_markup=keyboard)
         c = get_chat(c_id)
-        send_error(f"🤷🏿‍♂️ Бот не понимает пользователя {c[1]}, {c[3]}, {c[2]}. Он вводил {message.text}")
+        send_error(f"🤷🏿‍♂️ Бот не понимает пользователя {c[2]}. Он вводил {message.text}")
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -71,6 +71,14 @@ def callback_worker(call):
     data = call.data
     if data == "look_course":
         look_course(call)
+    elif data == "delete_user":
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton(text="↩️ Назад", callback_data="main_menu"))
+        bot.edit_message_text(f"ID клиента которого хотите удалить",
+                              c_id, call.message.id, parse_mode="HTML", reply_markup=keyboard)
+        bot.register_next_step_handler(call.message, delete_user)
+    elif data == "events_today":
+        print(requests.get("https://www.un.org/ru/sections/observances/international-days/").text)
     elif data == "feed_back":
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(types.InlineKeyboardButton(text="↩️ Назад", callback_data="main_menu"))
@@ -250,7 +258,7 @@ def increment_course(message, data):
                    f' Вы получите <b>{int(_answer_money)} {_course_text}</b>'
     _text += _course_all_text
     bot.send_message(c_id, _text, parse_mode="HTML", reply_markup=keyboard)
-    send_error(f"🌪 Пользователь  {c[1]}, {c[3]}, {c[2]} использовал конвертер {data}")
+    send_error(f"🌪 Пользователь  {c[2]} использовал конвертер {data}")
 
 
 def set_new_city_func(message):
@@ -309,7 +317,7 @@ def get_weather_forecast(message, call=None):
     else:
         bot.delete_message(c_id, message.id)
         bot.send_message(c_id, text=res, reply_markup=keyboard, parse_mode="HTML")
-    send_error(f"🌪 Пользователь  {c[1]}, {c[3]}, {c[2]} просмотрел <b>ПРОГНОЗ</b> в <b>{_city_name}</b>.")
+    send_error(f"🌪 Пользователь  {c[2]} просмотрел <b>ПРОГНОЗ</b> в <b>{_city_name}</b>.")
 
 
 def get_weather(message, call=None):
@@ -357,7 +365,7 @@ def get_weather(message, call=None):
         else:
             bot.delete_message(c_id, message.id)
             bot.send_message(c_id, text=_text, reply_markup=keyboard, parse_mode="HTML")
-        send_error(f"🌪 Пользователь  {c[1]}, {c[3]}, {c[2]} просмотрел погоду в <b>{res['city']}</b>.\n"
+        send_error(f"🌪 Пользователь  {c[2]} просмотрел погоду в <b>{res['city']}</b>.\n"
                    f"{_weather_smile} <b>{res['temp']}</b> градусов (ощущается как <b>{res['feels']}</b>){_district_text}")
 
 

@@ -5,9 +5,7 @@ from helper import find_weather_now
 from helper import load_exchange
 from helper import send_error
 from helper import delete_client_by_chat_id
-
 bot = telebot.TeleBot(config.TOKEN)
-
 clients = get_mailing_clients()
 keyboard = telebot.types.InlineKeyboardMarkup()
 keyboard.add(telebot.types.InlineKeyboardButton(text="В главное меню", callback_data="main_menu"))
@@ -57,12 +55,11 @@ for c in clients:
                 f"\n{_course_text}" \
                 f"\n\n<b>Мы желаем вам продуктивного дня и удачи!️</b>"
         bot.send_message(c[2], text=_text, reply_markup=keyboard, parse_mode="HTML")
-        _success_mailing_text += f"\n<b>{_index}.</b> {c[1]}, {c[2]}, {c[3]}, {c[6]}"
+        _success_mailing_text += f"\n<b>{_index}.</b> {c[2]}, {c[6]}"
         _index = _index + 1
     except:
-        _unsubscribed_users += f"\n<b>{_unsubscribed_index + 1}.</b> {c[1]}, {c[2]}, {c[3]}, {c[6]}"
+        _unsubscribed_users += f"\n<b>{_unsubscribed_index + 1}.</b> {c[2]}, {c[6]}"
         _unsubscribed_index += 1
-        delete_client_by_chat_id(c[2])
 
 if _unsubscribed_index > 0:
     _unsubscribed_text = f"\n\n<b>Отписавшиеся пользователи</b>" \

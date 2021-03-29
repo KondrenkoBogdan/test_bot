@@ -39,6 +39,7 @@ def main_menu(message, is_start):
         keyboard.add(types.InlineKeyboardButton(text='❄️ Узнать погоду ☀️', callback_data='look_weather_main'))
         keyboard.add(types.InlineKeyboardButton(text='👤 Личный кабинет ', callback_data='account'))
         keyboard.add(types.InlineKeyboardButton(text='🖋 Оставить отзыв или пожелание', callback_data='feed_back'))
+        #keyboard.add(types.InlineKeyboardButton(text='🖋 Узнать какие сегодня праздники', callback_data='events_today'))
     if chat[2] == 391796080:
         keyboard.add(types.InlineKeyboardButton(text='💻 Админка ⌨️', callback_data='admin_panel'))
     _text = f"👋 Доброе время суток, {chat[1]}\n❓ Чем можем вам помочь ?"
@@ -61,13 +62,21 @@ def set_new_name(message):
                      reply_markup=keyboard)
 
 
+def delete_user(message):
+    c_id = chat_id(message)
+    delete_client_by_chat_id(message.text)
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="↩️ Вернуться в главнео меню", callback_data="main_menu"))
+    bot.send_message(c_id, f"Клиент удален", reply_markup=keyboard)
+
+
 def feed_back_menu(message):
     c_id = chat_id(message)
     chat = get_chat(c_id)
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="↩️ Вернуться в главнео меню", callback_data="main_menu"))
     send_error(f"☄️ <b>КЛИЕНТ ОСТАВИЛ ОТЗЫВ ИЛИ ПОЖЕЛАНИЕ</b> ☄️\n"
-               f"Пользователь  <b>{chat[1]}, {chat[3]}, {chat[2]}</b>\n"
+               f"Пользователь  <b>{chat[2]}</b>\n"
                f"Текст:\n<b>{message.text}</b>")
     bot.send_message(c_id, f"Большое спасибо, мы ценим ваше мнение и обязательно его учтем !", reply_markup=keyboard)
 
@@ -105,6 +114,7 @@ def mailing(message):
 def admin_panel(call):
     c_id = chat_id(call)
     keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text='❗️ Удалить пользователя ❗️', callback_data='delete_user'))
     keyboard.add(types.InlineKeyboardButton(text='📝 Создать рассылку ПО ВСЕМ', callback_data='mailing_all'))
     keyboard.add(types.InlineKeyboardButton(text='📝 Создать рассылку', callback_data='mailing'))
     keyboard.add(types.InlineKeyboardButton(text='📝 Статистика', callback_data='statistic'))
@@ -126,7 +136,7 @@ def mailing_true(call):
                           call.message.id,
                           reply_markup=keyboard)
     send_error(f"<b>ПОЛЬЗОВАТЕЛЬ ПОДПИСАЛСЯ НА РАССЫЛКУ</b>\n"
-               f"{chat[1]}, {chat[3]}, {chat[2]}")
+               f"{chat[2]}")
 
 
 def mailing_refuse(call):
@@ -152,7 +162,7 @@ def mailing_false(call):
                           call.message.id,
                           reply_markup=keyboard, parse_mode="HTML")
     send_error(f"<b>ПОЛЬЗОВАТЕЛЬ ЗАПРЕТИЛ РАССЫЛКУ</b>\n"
-               f"{chat[1]}, {chat[3]}, {chat[2]}")
+               f"{chat[2]}")
 
 
 def load_exchange():
@@ -308,7 +318,7 @@ def course_menu(call):
 def get_course(call):
     c_id = chat_id(call)
     chat = get_chat(c_id)
-    send_error(f"💵 Пользователь  {chat[1]}, {chat[3]}, {chat[2]}, просмотрел курс {call.data[4:7]}")
+    send_error(f"💵 Пользователь {chat[2]}, просмотрел курс {call.data[4:7]}")
     _course = call.data[4:7]
     _res = get_exchange(_course)
     _s = float(_res['sale'])
@@ -465,8 +475,7 @@ def set_chat(chat_id, name, chat_login):
                        f"VALUES('{chat_id}','{name}','{chat_login}')")
         connection.commit()
         chat = get_chat(chat_id)
-        _callback_text = f"🙋 <b>Новый пользователь\nИмя: {name}\nЛогин {chat_login}\nСhat_id {chat_id}\n" \
-                         f"Порядковый номер {chat[0]}</b>"
+        _callback_text = f"<b>Новый пользователь</b>"
         send_error(_callback_text)
         return chat
     else:
