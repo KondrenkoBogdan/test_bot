@@ -1,10 +1,6 @@
 import telebot
 import config
-from helper import get_mailing_clients
-from helper import find_weather_now
-from helper import load_exchange
-from helper import send_error
-from helper import delete_client_by_chat_id
+from helper import get_mailing_clients, find_weather_now, load_exchange, mailing_weather, send_error
 bot = telebot.TeleBot(config.TOKEN)
 clients = get_mailing_clients()
 keyboard = telebot.types.InlineKeyboardMarkup()
@@ -13,8 +9,11 @@ _index = 1
 _success_mailing_text = ''
 _unsubscribed_index = 0
 _unsubscribed_users = ''
+
+
 for c in clients:
     try:
+        today_weather = mailing_weather(c[6], "mor")
         res = find_weather_now(c[6])
         if res['temp'] > 0:
             _weather_smile = "☀️"
@@ -44,7 +43,10 @@ for c in clients:
                                 f"\n    <b>Покупка:</b> {float(i['buy'])}" \
                                 f"\n    <b>Продажа:</b> {float(i['sale'])}"
         _text = f"🙋 Доброе утро, {c[1]}! 🌅" \
-                f"\n\n🌇 В вашем городе <b>{c[6]}</b> сейчас" \
+                f"\n🌇 В вашем городе <b>{c[6]}</b>" \
+                f"\n\n<b>🌥 Прогноз на грядущий день</b>" \
+                f"{today_weather}" \
+                f"🌥 <b>Погода в данный момент</b>" \
                 f"\n{_weather_smile} <b>{res['temp']}</b> градусов (ощущается как <b>{res['feels']}</b>)" \
                 f"{_district_text}" \
                 f"\n{_weather_text}" \

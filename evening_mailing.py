@@ -4,6 +4,7 @@ from helper import get_mailing_clients
 from helper import find_weather_now
 from helper import load_exchange
 from helper import send_error
+from helper import mailing_weather
 from helper import delete_client_by_chat_id
 
 bot = telebot.TeleBot(config.TOKEN)
@@ -17,6 +18,7 @@ _unsubscribed_index = 0
 _unsubscribed_users = ''
 for c in clients:
     try:
+        tomorrow_weather = mailing_weather(c[6], "ev")
         res = find_weather_now(c[6])
         if res['temp'] > 0:
             _weather_smile = "☀️"
@@ -46,7 +48,10 @@ for c in clients:
                                 f"\n    <b>Покупка:</b> {float(i['buy'])}" \
                                 f"\n    <b>Продажа:</b> {float(i['sale'])}"
         _text = f"🙋 Добрый вечер, {c[1]}! 🌃" \
-                f"\n\n🏙 В вашем городе <b>{c[6]}</b> сейчас" \
+                f"\n🏙 В вашем городе <b>{c[6]}</b>" \
+                f"\n\n<b>🌥 Прогноз на заврашний день</b>" \
+                f"{tomorrow_weather}" \
+                f"<b>🌥 Погода в данный момент</b>" \
                 f"\n{_weather_smile} <b>{res['temp']}</b> градусов (ощущается как <b>{res['feels']}</b>)" \
                 f"{_district_text}" \
                 f"\n{_weather_text}" \

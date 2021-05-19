@@ -246,6 +246,30 @@ def find_weather_seven(name):
     return _text
 
 
+def mailing_weather(name, type):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={name}&units=metric&appid=267e0592bf093a835ba1fffc762f9f70&lang=ru"
+    response = json.loads(requests.get(url).text)
+    lat = response['coord']['lat']
+    lon = response['coord']['lon']
+    main_url = f"http://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units=metric&exclude=current,hourly,minutely,alerts&appid=267e0592bf093a835ba1fffc762f9f70&lang=ru"
+    res = json.loads(requests.get(main_url).text)
+    if response['cod'] != 200:
+        return {"error": True, "message": response['message']}
+    else:
+        if type == "ev":
+            i = res['daily'][1]
+        else:
+            i = res['daily'][0]
+        _text = ""
+        _text += f'<b> {config.get_day_by_unix(i["dt"])} {config.get_week_day_by_unix(i["dt"])} ' \
+                 f'\n  {config.get_icon(i["weather"][0]["icon"])} {i["weather"][0]["description"]}</b>'
+        _text += f'\n  🌡 Температур от <b>{round(float(i["temp"]["min"]))}</b> до <b>{round(float(i["temp"]["max"]))}</b>'
+        _text += f'\n  🌅 Утром <b>{round(float(i["temp"]["morn"]))}</b> ощущается как <b>{round(float(i["feels_like"]["morn"]))}</b>'
+        _text += f'\n  🌇 Днем <b>{round(float(i["temp"]["day"]))}</b> ощущается как <b>{round(float(i["feels_like"]["day"]))}</b>'
+        _text += f'\n  🌃 Вечером <b>{round(float(i["temp"]["eve"]))}</b> ощущается как <b>{round(float(i["feels_like"]["eve"]))}</b>\n\n'
+    return _text
+
+
 def find_weather_now(name):
     url = f"http://api.openweathermap.org/data/2.5/weather?q={name}&units=metric&appid=267e0592bf093a835ba1fffc762f9f70&lang=ru"
     response = json.loads(requests.get(url).text)
